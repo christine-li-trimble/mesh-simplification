@@ -2,7 +2,7 @@
 
 This project includes the Ruby lib and header files used by SketchUp.
 
-## C++ Example - Hello World
+## C++ Example 
 
 ### Visual Studio 2022
 
@@ -20,11 +20,7 @@ Ruby C Extension so you can debug your code. The various build configuration
 is set up to launch different SketchUp versions. Refer to the project
 configuration and make your adjustments as needed:
 
-`SUEX_HelloWorld > Right Click > Configuration Properties > Debugging`
-
-### Xcode 14
-
-Xcode project is set up to build targets all the way back to Ruby 2.0.
+`SUEX_MeshSimplification > Right Click > Configuration Properties > Debugging`
 
 ## Windows and Runtime DLLs
 
