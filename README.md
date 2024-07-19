@@ -2,6 +2,13 @@
 
 This project includes the Ruby lib and header files used by SketchUp.
 
+## SLAPI dependency
+Download SU C SDK - https://extensions.sketchup.com/sketchup-sdk
+Additional Include Directories - add <SDK>/headers
+Additional Library Directories - Add <SDK>/binaries/sketchup/x64
+Additional Dependencies - add sketchup.lib
+
+
 ## C++ Example 
 
 ### Visual Studio 2022
