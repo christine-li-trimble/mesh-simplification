@@ -8,26 +8,22 @@
 
 /* Begin PBXBuildFile section */
 		339559611A0D798C00BB518A /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1590E61847A5A20084B06D /* Ruby.framework */; };
-		33CDE7B0182705EB00F7C6E8 /* SUEX_HelloWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7AF182705EB00F7C6E8 /* SUEX_HelloWorld.cpp */; };
 		33CDE7B918270A4800F7C6E8 /* RubyLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B618270A4800F7C6E8 /* RubyLib.h */; };
 		33CDE7BA18270A4800F7C6E8 /* RubyUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7B718270A4800F7C6E8 /* RubyUtils.cpp */; };
 		33CDE7BB18270A4800F7C6E8 /* RubyUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B818270A4800F7C6E8 /* RubyUtils.h */; };
-		E939EB2221120EE20023B67B /* SUEX_HelloWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7AF182705EB00F7C6E8 /* SUEX_HelloWorld.cpp */; };
+		A99F12BE2C5D88ED00355332 /* SUEX_MeshSimplification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A99F12BD2C5D88ED00355332 /* SUEX_MeshSimplification.cpp */; };
 		E939EB2321120EE20023B67B /* RubyUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7B718270A4800F7C6E8 /* RubyUtils.cpp */; };
 		E939EB2821120EE20023B67B /* RubyLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B618270A4800F7C6E8 /* RubyLib.h */; };
 		E939EB2921120EE20023B67B /* RubyUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B818270A4800F7C6E8 /* RubyUtils.h */; };
 		E93B35442705ED4100A175B3 /* Ruby.Framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE6B446F211DA18D006A1F2E /* Ruby.Framework */; };
 		E93B35452705ED6400A175B3 /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEC02B3F26C66FC100934F5F /* Ruby.framework */; };
-		E99766C1252CB0AD00B1D8E9 /* SUEX_HelloWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7AF182705EB00F7C6E8 /* SUEX_HelloWorld.cpp */; };
 		E99766C2252CB0AD00B1D8E9 /* RubyUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7B718270A4800F7C6E8 /* RubyUtils.cpp */; };
 		E99766C6252CB0AD00B1D8E9 /* RubyLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B618270A4800F7C6E8 /* RubyLib.h */; };
 		E99766C7252CB0AD00B1D8E9 /* RubyUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B818270A4800F7C6E8 /* RubyUtils.h */; };
-		E9EA8AC81DAFC10D0029551B /* SUEX_HelloWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7AF182705EB00F7C6E8 /* SUEX_HelloWorld.cpp */; };
 		E9EA8AC91DAFC10D0029551B /* RubyUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7B718270A4800F7C6E8 /* RubyUtils.cpp */; };
 		E9EA8ACD1DAFC10D0029551B /* RubyLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B618270A4800F7C6E8 /* RubyLib.h */; };
 		E9EA8ACE1DAFC10D0029551B /* RubyUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B818270A4800F7C6E8 /* RubyUtils.h */; };
 		E9EA8AD51DAFC2510029551B /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E9EA8AD41DAFC2510029551B /* Ruby.framework */; };
-		F9086B142A9E18AD0055AF1F /* SUEX_HelloWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7AF182705EB00F7C6E8 /* SUEX_HelloWorld.cpp */; };
 		F9086B152A9E18AD0055AF1F /* RubyUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33CDE7B718270A4800F7C6E8 /* RubyUtils.cpp */; };
 		F9086B192A9E18AD0055AF1F /* RubyLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B618270A4800F7C6E8 /* RubyLib.h */; };
 		F9086B1A2A9E18AD0055AF1F /* RubyUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 33CDE7B818270A4800F7C6E8 /* RubyUtils.h */; };
@@ -36,10 +32,10 @@
 
 /* Begin PBXFileReference section */
 		33CDE5E5182703B200F7C6E8 /* SUEX_HelloWorld.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = SUEX_HelloWorld.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		33CDE7AF182705EB00F7C6E8 /* SUEX_HelloWorld.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SUEX_HelloWorld.cpp; path = src/SUEX_HelloWorld.cpp; sourceTree = "<group>"; };
 		33CDE7B618270A4800F7C6E8 /* RubyLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RubyLib.h; sourceTree = "<group>"; };
 		33CDE7B718270A4800F7C6E8 /* RubyUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RubyUtils.cpp; sourceTree = "<group>"; };
 		33CDE7B818270A4800F7C6E8 /* RubyUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RubyUtils.h; sourceTree = "<group>"; };
+		A99F12BD2C5D88ED00355332 /* SUEX_MeshSimplification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SUEX_MeshSimplification.cpp; path = src/SUEX_MeshSimplification.cpp; sourceTree = "<group>"; };
 		CE1590E518479EAB0084B06D /* SUEX_HelloWorld_exports.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = SUEX_HelloWorld_exports.txt; sourceTree = "<group>"; };
 		CE1590E61847A5A20084B06D /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../ThirdParty/lib/mac/2.0/Ruby.framework; sourceTree = "<group>"; };
 		CE1590E81847A5F10084B06D /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../ThirdParty/lib/mac/1.8/Ruby.framework; sourceTree = "<group>"; };
@@ -100,8 +96,8 @@
 		33CDE5DA182703B100F7C6E8 = {
 			isa = PBXGroup;
 			children = (
+				A99F12BD2C5D88ED00355332 /* SUEX_MeshSimplification.cpp */,
 				33CDE7B518270A4800F7C6E8 /* RubyUtils */,
-				33CDE7AF182705EB00F7C6E8 /* SUEX_HelloWorld.cpp */,
 				CE1590E518479EAB0084B06D /* SUEX_HelloWorld_exports.txt */,
 				33CDE7B11827091E00F7C6E8 /* ThirdParty Frameworks */,
 				33CDE5E6182703B200F7C6E8 /* Products */,
@@ -338,7 +334,7 @@
 				LastUpgradeCheck = 1310;
 				ORGANIZATIONNAME = SketchUp;
 			};
-			buildConfigurationList = 33CDE5DF182703B100F7C6E8 /* Build configuration list for PBXProject "SUEX_HelloWorld" */;
+			buildConfigurationList = 33CDE5DF182703B100F7C6E8 /* Build configuration list for PBXProject "SUEX_MeshSimplification" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -365,7 +361,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				33CDE7B0182705EB00F7C6E8 /* SUEX_HelloWorld.cpp in Sources */,
 				33CDE7BA18270A4800F7C6E8 /* RubyUtils.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -374,7 +369,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E939EB2221120EE20023B67B /* SUEX_HelloWorld.cpp in Sources */,
 				E939EB2321120EE20023B67B /* RubyUtils.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -383,7 +377,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E99766C1252CB0AD00B1D8E9 /* SUEX_HelloWorld.cpp in Sources */,
 				E99766C2252CB0AD00B1D8E9 /* RubyUtils.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -392,7 +385,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E9EA8AC81DAFC10D0029551B /* SUEX_HelloWorld.cpp in Sources */,
 				E9EA8AC91DAFC10D0029551B /* RubyUtils.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -401,7 +393,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F9086B142A9E18AD0055AF1F /* SUEX_HelloWorld.cpp in Sources */,
+				A99F12BE2C5D88ED00355332 /* SUEX_MeshSimplification.cpp in Sources */,
 				F9086B152A9E18AD0055AF1F /* RubyUtils.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -413,6 +405,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "/Applications/SketchUp 2024/SketchUp.app/Contents/MacOs/SketchUp";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
@@ -438,6 +431,7 @@
 				ENABLE_TESTABILITY = YES;
 				EXECUTABLE_EXTENSION = bundle;
 				EXPORTED_SYMBOLS_FILE = SUEX_HelloWorld_exports.txt;
+				FRAMEWORK_SEARCH_PATHS = "/Users/gsutcli/Downloads/SDK_Mac_2024-0-554";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -455,7 +449,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACH_O_TYPE = mh_bundle;
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				PRODUCT_NAME = SUEX_HelloWorld;
 				SDKROOT = macosx;
 				VALID_ARCHS = "x86_64 arm64";
@@ -466,6 +460,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "/Applications/SketchUp 2024/SketchUp.app/Contents/MacOs/SketchUp";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
@@ -491,6 +486,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				EXECUTABLE_EXTENSION = bundle;
 				EXPORTED_SYMBOLS_FILE = SUEX_HelloWorld_exports.txt;
+				FRAMEWORK_SEARCH_PATHS = "/Users/gsutcli/Downloads/SDK_Mac_2024-0-554";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -502,7 +498,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACH_O_TYPE = mh_bundle;
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				PRODUCT_NAME = SUEX_HelloWorld;
 				SDKROOT = macosx;
 				VALID_ARCHS = "x86_64 arm64";
@@ -677,10 +673,11 @@
 				DYLIB_CURRENT_VERSION = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../ThirdParty/lib/mac/3.2\"",
+					"/Users/gsutcli/Downloads/SDK_Mac_2024-0-554",
+					"$(SRCROOT)/../ThirdParty/lib/mac/3.2/Ruby.framework/Versions/3.2.2",
 				);
 				HEADER_SEARCH_PATHS = ../ThirdParty/include/ruby/3.2/mac;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_CFLAGS = "-fdeclspec";
 			};
 			name = Debug;
@@ -695,10 +692,11 @@
 				DYLIB_CURRENT_VERSION = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../ThirdParty/lib/mac/3.2\"",
+					"/Users/gsutcli/Downloads/SDK_Mac_2024-0-554",
+					"$(SRCROOT)/../ThirdParty/lib/mac/3.2/Ruby.framework/Versions/3.2.2",
 				);
 				HEADER_SEARCH_PATHS = ../ThirdParty/include/ruby/3.2/mac;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_CFLAGS = "-fdeclspec";
 			};
 			name = Release;
@@ -706,7 +704,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		33CDE5DF182703B100F7C6E8 /* Build configuration list for PBXProject "SUEX_HelloWorld" */ = {
+		33CDE5DF182703B100F7C6E8 /* Build configuration list for PBXProject "SUEX_MeshSimplification" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				33CDE5E7182703B200F7C6E8 /* Debug */,
