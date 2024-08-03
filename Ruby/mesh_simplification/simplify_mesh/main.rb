@@ -73,12 +73,15 @@ module Examples
 
       selection = Sketchup.active_model.selection
 
-      out_entity = SUEX_MeshSimplification::take_input(selection) #Call C code, get a entity back
+      # Call the C code.
+      out_entity = SUEX_MeshSimplification::take_input(selection) 
 
       model.start_operation('CreateFaceFromSLAPIOutput', true)
+      # In SketchUp, we tend to put geometry in groups/components, otherwise
+      # colocated geometry sticks.
       group = model.active_entities.add_group
       group.name = "Output"
-      #Move it so it's not in the same position.
+      # Move it so it's not in the same position.
       group.transformation = Geom::Transformation.new([-100,-100,0])
       entities = group.entities
       entities.build { |builder|
