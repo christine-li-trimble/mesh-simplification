@@ -77,9 +77,18 @@ module Examples
       sz = out_entity.length()
     
       puts sz
-      sz.times { |x|
-        entities.build { |builder|
-          builder.add_face(out_entity[x])
+      entities.build { |builder|
+        sz.times { |x|
+          # puts x
+          # puts out_entity[x]
+          # Sometimes we run into an error with add face, if the vertices are not coplanar - not sure why this happens!
+          # If we do run into an error, just continue the loop and ignore this face.
+          begin
+            builder.add_face(out_entity[x])
+          rescue
+            puts "Error detected - Skipping face"
+            next
+          end
         }
       }
       model.commit_operation

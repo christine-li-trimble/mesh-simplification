@@ -47,9 +47,13 @@ VALUE take_input(void* input) {
 
 	for (auto face : faces) {
 		std::vector<SUVertexRef> vertices(3);
+		size_t count_verts = 0;
+		size_t count_verts_used = 0;
+		SUFaceGetNumVertices(face, &count_verts);
 		// ... and get the first 3 vertices to send back to ruby so it can make a
 		// new face.
-		SUFaceGetVertices(face, 3, &vertices[0], &count);
+		SUFaceGetVertices(face, 3, &vertices[0], &count_verts_used);
+		rb_warn("Number of verts in face %d (truncated to %d)", (int)count_verts, count_verts_used);
 		VALUE ruby_vertices = rb_ary_new_capa(static_cast<long>(vertices.size()));
 
 		// Iterate through the vertices, adding them to the ruby_vertices container, which in turn
