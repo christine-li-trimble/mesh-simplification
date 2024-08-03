@@ -60,23 +60,13 @@ module Examples
     def self.SimplifyMesh
       model = Sketchup.active_model
       
-      model.start_operation('Create Face', true)
+      # model.start_operation('Create Face', true)
       entities = model.entities
-      points = [
-        Geom::Point3d.new(0,   0,   0),
-        Geom::Point3d.new(1.m, 0,   0),
-        Geom::Point3d.new(1.m, 1.m, 0),
-        Geom::Point3d.new(0,   1.m, 0)
-      ]
-      face = entities.add_face(points)
-      model.commit_operation
-
-      selection = Sketchup.active_model.selection
 
       # Call the C code.
-      out_entity = SUEX_MeshSimplification::take_input(selection) 
+      out_entity = SUEX_MeshSimplification::take_input(entities) 
 
-      model.start_operation('CreateFaceFromSLAPIOutput', true)
+      model.start_operation('CreateFacesFromSLAPIOutput', true)
       # In SketchUp, we tend to put geometry in groups/components, otherwise
       # colocated geometry sticks.
       group = model.active_entities.add_group
@@ -84,8 +74,13 @@ module Examples
       # Move it so it's not in the same position.
       group.transformation = Geom::Transformation.new([-100,-100,0])
       entities = group.entities
-      entities.build { |builder|
-          builder.add_face(out_entity)
+      sz = out_entity.length()
+    
+      puts sz
+      sz.times { |x|
+        entities.build { |builder|
+          builder.add_face(out_entity[x])
+        }
       }
       model.commit_operation
     end

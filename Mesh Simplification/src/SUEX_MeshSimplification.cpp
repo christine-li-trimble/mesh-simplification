@@ -29,30 +29,44 @@ VALUE take_input(void* input) {
 	size_t num_faces = 0;
 	// Get the number of groups in the collection of entities.
 	// Not needed for this example use-case, but just showing some more apis.
-	SUEntitiesGetNumGroups(entities, &num_faces);
-	rb_warn("Number of groups %d", (int)num_faces);
+	SUEntitiesGetNumFaces(entities, &num_faces);
+	rb_warn("Number of faces %d", (int)num_faces);
 
-	std::vector<SUFaceRef> faces(1);
-	size_t count = 0;
-	// From the collection of entities, let's get the faces...
-	SUEntitiesGetFaces(entities, 1, &faces[0], &count);
-	std::vector<SUVertexRef> vertices(3);
-	// ... and get the first 3 vertices to send back to ruby so it can make a
-	// new face.
-	SUFaceGetVertices(faces[0], 3, &vertices[0], &count);
-
-	VALUE ruby_vertices = rb_ary_new_capa(static_cast<long>(vertices.size()));
-	// Iterate through the vertices, adding them to the ruby_vertices container,
-	// so we can send them back.
-	for (auto v : vertices) {
-		SUEntityRef entity = SUVertexToEntity(v);
-		VALUE ruby_vertex = Qnil;
-		SUEntityToRuby(entity, &ruby_vertex);
-		rb_ary_push(ruby_vertices, ruby_vertex);
+	if (num_faces == 0) {
+		rb_warn("No faces found at the top level of the model %d");
+		return Qnil;
 	}
 
-	// Send out the vertices after doing geometry processing.
-	return ruby_vertices;
+	std::vector<SUFaceRef> faces(num_faces);
+	size_t count = 0;
+	// From the collection of entities, let's get the faces...
+	SUEntitiesGetFaces(entities, num_faces, &faces[0], &count);
+
+	// Create an array of faces. Each entry will be an array of vertices
+	VALUE ruby_new_faces = rb_ary_new_capa(static_cast<long>(faces.size()));
+
+	for (auto face : faces) {
+		std::vector<SUVertexRef> vertices(3);
+		// ... and get the first 3 vertices to send back to ruby so it can make a
+		// new face.
+		SUFaceGetVertices(face, 3, &vertices[0], &count);
+		VALUE ruby_vertices = rb_ary_new_capa(static_cast<long>(vertices.size()));
+
+		// Iterate through the vertices, adding them to the ruby_vertices container, which in turn
+		// is put into the ruby_new_faces container to be sent back to Ruby.
+		for (auto v : vertices) {
+			SUEntityRef entity = SUVertexToEntity(v);
+			VALUE ruby_vertex = Qnil;
+			SUEntityToRuby(entity, &ruby_vertex);
+			rb_ary_push(ruby_vertices, ruby_vertex);
+		}
+
+		rb_ary_push(ruby_new_faces, ruby_vertices);
+	}
+
+
+	// Send out the array of arrays of vertices after doing geometry processing.
+	return ruby_new_faces;
 }
 
 VALUE ruby_platform() {
