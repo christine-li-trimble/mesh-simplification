@@ -25,6 +25,10 @@ module Examples
       end
     end
 
+    def self.hello_world
+      puts SUEX_MeshSimplification::hello_world();
+    end
+
     def self.readmesh
       model = Sketchup.active_model
       
@@ -54,7 +58,7 @@ module Examples
       UI.messagebox("There are " + $face_count.to_s + " faces selected." +
                     "There are " + $edge_count.to_s + " edges selected.")
 
-      puts SUEX_MeshSimplification::hello_world();
+      
     end
 
     def self.SimplifyMesh
@@ -97,7 +101,8 @@ module Examples
     unless file_loaded?(__FILE__)
       menu = UI.menu('Plugins')
       menu.add_item('01 Mesh simplification') {
-        self.SimplifyMesh
+        self.hello_world
+        #self.SimplifyMesh
       }
       file_loaded(__FILE__)
     end

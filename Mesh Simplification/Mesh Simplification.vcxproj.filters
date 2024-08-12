@@ -30,12 +30,30 @@
     <ClInclude Include="src\RubyUtils\RubyUtils.h">
       <Filter>Ruby Utils\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\decimate_qem.h">
+      <Filter>Ruby Extension</Filter>
+    </ClInclude>
+    <ClInclude Include="src\half_edge.h">
+      <Filter>Ruby Extension</Filter>
+    </ClInclude>
+    <ClInclude Include="quadric.h">
+      <Filter>Ruby Extension</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\RubyUtils\RubyUtils.cpp">
       <Filter>Ruby Utils\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\SUEX_MeshSimplification.cpp">
+      <Filter>Ruby Extension</Filter>
+    </ClCompile>
+    <ClCompile Include="src\decimate_qem.cpp">
+      <Filter>Ruby Extension</Filter>
+    </ClCompile>
+    <ClCompile Include="src\half_edge.cpp">
+      <Filter>Ruby Extension</Filter>
+    </ClCompile>
+    <ClCompile Include="quadric.cpp">
       <Filter>Ruby Extension</Filter>
     </ClCompile>
   </ItemGroup>
