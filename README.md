@@ -2,16 +2,15 @@
 
 This project includes the Ruby lib and header files used by SketchUp.
 
-## SLAPI dependency
 Download SU C SDK - https://extensions.sketchup.com/sketchup-sdk
 ### Visual Studio config
 Note: requires Visual Studio 2022 version 17.9 or less - 17.10 requires a hack in the embedded ruby config.h
 #### Additional Include Directories 
-add \<SDK\>/headers
+* `SUEX_MeshSimplification > Right Click > Configuration Properties > C/C++ > General > Additional Include Directories > add "(Your_SDK_Location)/headers"`
 #### Additional Library Directories 
-add \<SDK\>/binaries/sketchup/x64
+* `SUEX_MeshSimplification > Right Click > Configuration Properties > General > Additional Library Directories > add "(Your_SDK_Location)/binaries/sketchup/x64"`
 #### Additional Dependencies 
-add sketchup.lib
+* `SUEX_MeshSimplification > Right Click > Configuration Properties > Linker > Input > Additional Dependencies > add "sketchup.lib"`
 
 
 ## C++ Example 

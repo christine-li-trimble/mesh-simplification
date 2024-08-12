@@ -8,6 +8,7 @@
 #include <SketchUpAPI/common.h>
 #include <SketchUpAPI/model/defs.h>
 #include <SketchupAPI/application/ruby_api.h>
+#include "decimate_qem.h"
 
 VALUE hello_world() {
 	return GetRubyInterface("Hello World!");
@@ -39,34 +40,91 @@ VALUE take_input(void* input) {
 
 	std::vector<SUFaceRef> faces(num_faces);
 	size_t count = 0;
+
 	// From the collection of entities, let's get the faces...
 	SUEntitiesGetFaces(entities, num_faces, &faces[0], &count);
-
-	// Create an array of faces. Each entry will be an array of vertices
-	VALUE ruby_new_faces = rb_ary_new_capa(static_cast<long>(faces.size()));
-
+	std::vector<long> faces_indices;
+	std::vector<vertex> vertices;
 	for (auto face : faces) {
-		std::vector<SUVertexRef> vertices(3);
+		
+		std::vector<SUVertexRef> temp_vertices(3);
 		size_t count_verts = 0;
 		size_t count_verts_used = 0;
 		SUFaceGetNumVertices(face, &count_verts);
-		// ... and get the first 3 vertices to send back to ruby so it can make a
-		// new face.
-		SUFaceGetVertices(face, 3, &vertices[0], &count_verts_used);
-		rb_warn("Number of verts in face %d (truncated to %d)", (int)count_verts, count_verts_used);
-		VALUE ruby_vertices = rb_ary_new_capa(static_cast<long>(vertices.size()));
+		SUFaceGetVertices(face, count_verts, &temp_vertices[0], &count_verts_used);
+		// need to use SUMeshHelperCreate to get the mesh vertices of the face
+		for (int i = 0; i < 3; i++)
+		{
+			SUPoint3D position;
+			SUVertexGetPosition(temp_vertices[i], &position);
+			vertex temp = { position.x, position.y, position.z };
+			std::vector<vertex>::iterator it = std::find(vertices.begin(), vertices.end(), temp);
+			if (it == vertices.end())
+			{
+				vertices.push_back(temp);
+				faces_indices.push_back(static_cast<long>(vertices.size()-1));
+			}
+			else
+			{
+				faces_indices.push_back(static_cast<long>(it-vertices.begin()));
+			}
+		}
+	}
 
-		// Iterate through the vertices, adding them to the ruby_vertices container, which in turn
-		// is put into the ruby_new_faces container to be sent back to Ruby.
-		for (auto v : vertices) {
-			SUEntityRef entity = SUVertexToEntity(v);
+	// Decimation QEM Function
+	// TODO : Test the implemenation of the decimation function
+	long num_target_vertices = static_cast < long>(0.5 * vertices.size());
+	decimate_qem(faces_indices, vertices, num_target_vertices,
+	             500, 1.0, 1.e-6);
+
+	// Create an array of faces. Each entry will be an array of vertices
+	// TODO : Test the implemenation of the adding the vertices to the faces
+	long num_faces_indices = static_cast<long>(faces_indices.size());
+	long num_decimated_faces = static_cast<long>(faces_indices.size() / 3);
+	VALUE ruby_new_faces = rb_ary_new_capa(num_decimated_faces);
+	for (long i = 0; i < num_decimated_faces; i++) {
+
+		VALUE ruby_vertices = rb_ary_new_capa(3);
+		
+		for (int j = 0; j < 3; j++)
+		{
+			SUPoint3D position(vertices[faces_indices[i * 3 + j]].x,
+				               vertices[faces_indices[i * 3 + j]].y, 
+				               vertices[faces_indices[i * 3 + j]].z);
+			SUVertexRef temp_vertices(&position);
+			SUEntityRef entity = SUVertexToEntity(temp_vertices);
 			VALUE ruby_vertex = Qnil;
 			SUEntityToRuby(entity, &ruby_vertex);
 			rb_ary_push(ruby_vertices, ruby_vertex);
 		}
-
 		rb_ary_push(ruby_new_faces, ruby_vertices);
 	}
+
+
+
+	// Geoff's original code to get the first 3 vertices of each face.
+	//for (auto face : faces) {
+	//	std::vector<SUVertexRef> vertices(3);
+	//	size_t count_verts = 0;
+	//	size_t count_verts_used = 0;
+	//	SUFaceGetNumVertices(face, &count_verts);
+	//	// ... and get the first 3 vertices to send back to ruby so it can make a
+	//	// new face.
+	//	SUFaceGetVertices(face, 3, &vertices[0], &count_verts_used);
+	//	rb_warn("Number of verts in face %d (truncated to %d)", (int)count_verts, count_verts_used);
+	//	VALUE ruby_vertices = rb_ary_new_capa(static_cast<long>(vertices.size()));
+
+	//	// Iterate through the vertices, adding them to the ruby_vertices container, which in turn
+	//	// is put into the ruby_new_faces container to be sent back to Ruby.
+	//	for (auto v : vertices) {
+	//		SUEntityRef entity = SUVertexToEntity(v);
+	//		VALUE ruby_vertex = Qnil;
+	//		SUEntityToRuby(entity, &ruby_vertex);
+	//		rb_ary_push(ruby_vertices, ruby_vertex);
+	//	}
+
+	//	rb_ary_push(ruby_new_faces, ruby_vertices);
+	//}
 
 
 	// Send out the array of arrays of vertices after doing geometry processing.
