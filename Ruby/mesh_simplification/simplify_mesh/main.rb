@@ -61,14 +61,47 @@ module Examples
       
     end
 
+    # Function to tessellate a face and print its triangles
+    def self.tessellate_face(face)
+      return unless face.is_a?(Sketchup::Face)
+      
+      # Convert the face into a mesh
+      mesh = face.mesh
+      model = Sketchup.active_model
+      entities = model.active_entities
+      # printf 'entities size %d', entities.count
+      entities.add_faces_from_mesh(mesh)
+      # face.erase!
+    end
+
+    def self.tessellate_all_faces
+      puts "Tessellating faces..."
+      model = Sketchup.active_model
+      entities = model.entities
+      
+      # Iterate over entities and process faces
+      entities.each do |entity|
+        if entity.is_a?(Sketchup::Face)
+          tessellate_face(entity)
+        end
+      end
+      model.close_active
+    end
+
     def self.SimplifyMesh
       model = Sketchup.active_model
       
       # model.start_operation('Create Face', true)
-      entities = model.entities
+      t_group = model.active_entities.add_group
+      t_group.name = "Tessellated"
+      path = Sketchup::InstancePath.new([t_group])
+      model.active_path = path
+      tessellate_all_faces
+      model.close_active
+
 
       # Call the C code.
-      out_entity = SUEX_MeshSimplification::take_input(entities) 
+      out_entity = SUEX_MeshSimplification::take_input() 
 
       model.start_operation('CreateFacesFromSLAPIOutput', true)
       # In SketchUp, we tend to put geometry in groups/components, otherwise
