@@ -88,14 +88,14 @@ VALUE take_input(void* input) {
 		
 		for (int j = 0; j < 3; j++)
 		{
-			SUPoint3D position(vertices[faces_indices[i * 3 + j]].x,
-				               vertices[faces_indices[i * 3 + j]].y, 
-				               vertices[faces_indices[i * 3 + j]].z);
-			SUVertexRef temp_vertices(&position);
-			SUEntityRef entity = SUVertexToEntity(temp_vertices);
-			VALUE ruby_vertex = Qnil;
-			SUEntityToRuby(entity, &ruby_vertex);
-			rb_ary_push(ruby_vertices, ruby_vertex);
+			SUPoint3D position{ vertices[faces_indices[i * 3 + j]].x,
+							   vertices[faces_indices[i * 3 + j]].y,
+							   vertices[faces_indices[i * 3 + j]].z };
+			VALUE ruby_position = rb_ary_new_capa(3);
+			rb_ary_push(ruby_position, DBL2NUM(position.x));
+			rb_ary_push(ruby_position, DBL2NUM(position.y));
+			rb_ary_push(ruby_position, DBL2NUM(position.z));
+			rb_ary_push(ruby_vertices, ruby_position);
 		}
 		rb_ary_push(ruby_new_faces, ruby_vertices);
 	}
