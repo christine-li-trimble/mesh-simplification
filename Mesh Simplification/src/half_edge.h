@@ -26,4 +26,9 @@ private:
 	vector<long> twins;
 	vector<long> tips;
 
+	// New attributes
+	vector<long> tails;
+	vector<long> nexts;
+	vector<long> adjacent_faces;
+	vector<bool> is_boundary_halfedge;
 };
