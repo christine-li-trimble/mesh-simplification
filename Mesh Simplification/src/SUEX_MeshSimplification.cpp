@@ -14,7 +14,7 @@ VALUE hello_world() {
 	return GetRubyInterface("Hello World!");
 }
 
-VALUE take_input(void* input) {
+VALUE take_input() {
 	SUModelRef model = SU_INVALID;
 	// Get a reference to the model in the currently running SketchUp.
 	SUApplicationGetActiveModel(&model);
@@ -25,7 +25,8 @@ VALUE take_input(void* input) {
 
 	SUEntitiesRef entities = SU_INVALID;
 	// Get a collection of all the entities at the top level of the model.
-	SUModelGetEntities(model, &entities);
+	// SUModelGetEntities(model, &entities);
+	SUModelGetActiveEntities(model, &entities);
 
 	size_t num_faces = 0;
 	// Get the number of groups in the collection of entities.
@@ -144,5 +145,5 @@ void Init_SUEX_MeshSimplification()
 	rb_define_const(mSUEX_MeshSimplification, "CEXT_VERSION", GetRubyInterface("1.0.0"));
 	rb_define_module_function(mSUEX_MeshSimplification, "hello_world", VALUEFUNC(hello_world), 0);
 	rb_define_module_function(mSUEX_MeshSimplification, "ruby_platform", VALUEFUNC(ruby_platform), 0);
-	rb_define_module_function(mSUEX_MeshSimplification, "take_input", VALUEFUNC(take_input), 1);
+	rb_define_module_function(mSUEX_MeshSimplification, "take_input", VALUEFUNC(take_input), 0);
 }
