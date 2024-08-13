@@ -101,8 +101,8 @@ module Examples
     unless file_loaded?(__FILE__)
       menu = UI.menu('Plugins')
       menu.add_item('01 Mesh simplification') {
-        self.hello_world
-        #self.SimplifyMesh
+        #self.hello_world
+        self.SimplifyMesh
       }
       file_loaded(__FILE__)
     end

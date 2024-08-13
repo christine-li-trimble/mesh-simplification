@@ -47,10 +47,10 @@ VALUE take_input(void* input) {
 	std::vector<vertex> vertices;
 	for (auto face : faces) {
 		
-		std::vector<SUVertexRef> temp_vertices(3);
 		size_t count_verts = 0;
 		size_t count_verts_used = 0;
 		SUFaceGetNumVertices(face, &count_verts);
+		std::vector<SUVertexRef> temp_vertices(count_verts);
 		SUFaceGetVertices(face, count_verts, &temp_vertices[0], &count_verts_used);
 		// need to use SUMeshHelperCreate to get the mesh vertices of the face
 		for (int i = 0; i < 3; i++)
@@ -73,9 +73,9 @@ VALUE take_input(void* input) {
 
 	// Decimation QEM Function
 	// TODO : Test the implemenation of the decimation function
-	long num_target_vertices = static_cast < long>(0.5 * vertices.size());
-	decimate_qem(faces_indices, vertices, num_target_vertices,
-	             500, 1.0, 1.e-6);
+	//long num_target_vertices = static_cast < long>(0.5 * vertices.size());
+	//decimate_qem(faces_indices, vertices, num_target_vertices,
+	//             500, 1.0, 1.e-6);
 
 	// Create an array of faces. Each entry will be an array of vertices
 	// TODO : Test the implemenation of the adding the vertices to the faces
