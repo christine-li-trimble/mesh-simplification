@@ -28,32 +28,46 @@ VALUE take_input() {
 	// SUModelGetEntities(model, &entities);
 	SUModelGetActiveEntities(model, &entities);
 
+	size_t num_components = 0;
+	size_t count = 0;
 	size_t num_faces = 0;
 	// Get the number of groups in the collection of entities.
 	// Not needed for this example use-case, but just showing some more apis.
-	SUEntitiesGetNumFaces(entities, &num_faces);
-	rb_warn("Number of faces %d", (int)num_faces);
+	size_t num_groups = 0;
+	SUEntitiesGetNumGroups(entities, &num_groups);
+	rb_warn("Number of groups %d", (int)num_groups);
 
+	std::vector<SUGroupRef> groups(num_groups);
+	SUEntitiesGetGroups(entities, num_groups, &groups[0], &count);
+
+
+	SUEntitiesRef group_entities = SU_INVALID;
+	SUGroupGetEntities(groups[0], &group_entities);
+
+	SUEntitiesGetNumFaces(group_entities, &num_faces);
+	rb_warn("Number of faces %d", (int)num_faces);
 	if (num_faces == 0) {
 		rb_warn("No faces found at the top level of the model %d");
 		return Qnil;
 	}
 
 	std::vector<SUFaceRef> faces(num_faces);
-	size_t count = 0;
+	count = 0;
 
 	// From the collection of entities, let's get the faces...
-	SUEntitiesGetFaces(entities, num_faces, &faces[0], &count);
+	SUEntitiesGetFaces(group_entities, num_faces, &faces[0], &count);
+
+
 	std::vector<long> faces_indices;
 	std::vector<vertex> vertices;
 	for (auto face : faces) {
 		
 		size_t count_verts = 0;
 		size_t count_verts_used = 0;
+		size_t count_triangles = 0;
 		SUFaceGetNumVertices(face, &count_verts);
 		std::vector<SUVertexRef> temp_vertices(count_verts);
 		SUFaceGetVertices(face, count_verts, &temp_vertices[0], &count_verts_used);
-		// need to use SUMeshHelperCreate to get the mesh vertices of the face
 		for (int i = 0; i < 3; i++)
 		{
 			SUPoint3D position;
@@ -101,31 +115,6 @@ VALUE take_input() {
 		rb_ary_push(ruby_new_faces, ruby_vertices);
 	}
 
-
-
-	// Geoff's original code to get the first 3 vertices of each face.
-	//for (auto face : faces) {
-	//	std::vector<SUVertexRef> vertices(3);
-	//	size_t count_verts = 0;
-	//	size_t count_verts_used = 0;
-	//	SUFaceGetNumVertices(face, &count_verts);
-	//	// ... and get the first 3 vertices to send back to ruby so it can make a
-	//	// new face.
-	//	SUFaceGetVertices(face, 3, &vertices[0], &count_verts_used);
-	//	rb_warn("Number of verts in face %d (truncated to %d)", (int)count_verts, count_verts_used);
-	//	VALUE ruby_vertices = rb_ary_new_capa(static_cast<long>(vertices.size()));
-
-	//	// Iterate through the vertices, adding them to the ruby_vertices container, which in turn
-	//	// is put into the ruby_new_faces container to be sent back to Ruby.
-	//	for (auto v : vertices) {
-	//		SUEntityRef entity = SUVertexToEntity(v);
-	//		VALUE ruby_vertex = Qnil;
-	//		SUEntityToRuby(entity, &ruby_vertex);
-	//		rb_ary_push(ruby_vertices, ruby_vertex);
-	//	}
-
-	//	rb_ary_push(ruby_new_faces, ruby_vertices);
-	//}
 
 
 	// Send out the array of arrays of vertices after doing geometry processing.
