@@ -15,6 +15,11 @@ CHalfEdge::~CHalfEdge()
 	//TODO: implement this method
 }
 
+size_t CHalfEdge::size()
+{
+	return twins.size();
+}
+
 // return the twin half edge of the current half edge
 long CHalfEdge::twin(long i_he)
 {
