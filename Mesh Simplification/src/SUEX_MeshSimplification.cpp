@@ -1,269 +1,148 @@
+
 #include <algorithm>
+#include <iostream>
 #include <vector>
-#include "half_edge.h"
-#include <map>
 
-using namespace std;
+#include "RubyUtils/RubyUtils.h"
+#include <SketchUpAPI/sketchup.h>
+#include <SketchUpAPI/common.h>
+#include <SketchUpAPI/model/defs.h>
+#include <SketchupAPI/application/ruby_api.h>
+#include "decimate_qem.h"
 
-CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &vertices)
-{
-	//TODO: implement this method
-	// initialize the half edge data structure
-	std::map<std::pair<long, long>, int> index_from_halfedges;
+VALUE hello_world() {
+	return GetRubyInterface("Hello World!");
+}
 
-	// For each triangle face, iterate over three edges and create three halfedges
-	for (int face = 0; face < faces_indices.size() / 3; ++face)
-	{
-		// getting all halfedges from the mesh:
-		int v0 = faces_indices[3 * face];
-		int v1 = faces_indices[3 * face + 1];
-		int v2 = faces_indices[3 * face + 2];
+VALUE take_input(void* input) {
+	SUModelRef model = SU_INVALID;
+	// Get a reference to the model in the currently running SketchUp.
+	SUApplicationGetActiveModel(&model);
 
-		// New Halfedges: v0v1, v1v2, v2v0
-		int prev_halfedges_len = tips.size();
-		// mapping vertices to halfedges indices. The number of tips counts how many
-		// halfedges were already created
-		// creating halfedge index for the vertices pair v0v1
-		index_from_halfedges.insert(std::pair<long, long>(v0, v1), tips.size());
-		tails.push_back(v0);
-		tips.push_back(v1);
-		// creating the next of each halfedge. The indices are the number 
-		// of halfedges already created until the moment + a relative index (that ranges form 0 to 3,
-		// since the triangle has 3 vertices)
-		// getting the next of the first halfedge of the current triangle face. 1%3 is equal to 1,
-		// so, 1 is summed, since this is the first halfedge of the triangle
-		nexts.push_back(prev_halfedges_len + (1 % 3));
-		// getting the face that the current halfedge 'points' to
-		adjacent_faces.push_back(face);
-
-		// creating halfedge index for the vertices pair v1v2
-		index_from_halfedges.insert(std::pair<long, long>(v1, v2), tips.size());
-		tails.push_back(v1);
-		tips.push_back(v2);
-		// getting the next of the second halfedge of the current triangle face. 2%3 is equal to 2,
-		// so, 2 is summed, since this is the second halfedge of the triangle	
-		nexts.push_back(prev_halfedges_len + (2 % 3));
-		// getting the face that the current halfedge 'points' to
-		adjacent_faces.push_back(face);
-
-		// creating halfedge index for the vertices pair v2v0. Note that we are returning
-		// to the first vertex of the triangle face:
-		index_from_halfedges.insert(std::pair<long, long>(v2, v0), tips.size());
-		tails.push_back(v2);
-		tips.push_back(v0);
-		// getting the next of the first halfedge of the current triangle face. 3%3 is equal to 0,
-		// so, 0 is summed, since this is the starting halfedge of the triangle
-		nexts.push_back(prev_halfedges_len + (3 % 3));
-		// getting the face that the current halfedge 'points' to
-		adjacent_faces.push_back(face);
-	}
-	
-	twins.resize(tips.size(), -1);
-	is_boundary_halfedge.resize(tips.size(), false);
-	for (const auto& [halfedge, index]: index_from_halfedges)
-	{
-		// Current halfedge with tail vA and tip vB and index X...
-		// Search for halfedge with tail vB and tip vA and index Y
-		// -> if this halfedge exists, they are twins!
-		// -> if this halfedge doesn't exist, then the current halfedge is a boundary edge
-		int vA = halfedge.first;
-		int vB = halfedge.second;
-		auto it = index_from_halfedges.find(std::pair<long, long>(vA, vB));
-		if (it != index_from_halfedges.end())
-		{
-			twins[it->second] = index;
-			twins[index] = it->second;
-		}
-		else
-		{
-			is_boundary_halfedge[index] = true;
-		}
+	if (SUIsInvalid(model)) {
+		return Qnil;
 	}
 
-	// Get the current number of halfedges -- this represents all halfedges created so far,
-	// which doesn't include the twins of border halfedges
-	// The next loop creates the twins of border halfedges and place their attributes at the end of
-	// the vectors that define the halfedges (tips, tails, nexts etc)
-	int num_interior_halfedges = tips.size();
-	for (int i = 0; i < num_interior_halfedges; ++i)
-	{
-		if (is_boundary_halfedge[i])
-		{
-			// Current (border) halfedge has tail vA and tip vB
-			// Create twin halfedge which has tail vB and tip vA
-			// A new halfedge was just created, so it is necesary to put a new entry in the the vectors
-			// that implicitly represent the halfedges
-			int vA = tails[i];
-			int vB = tips[i];
+	SUEntitiesRef entities = SU_INVALID;
+	// Get a collection of all the entities at the top level of the model.
+	SUModelGetEntities(model, &entities);
 
-			// The current number of halfedges can be used as an index for the new halfedge
-			int new_halfedge_index = twins.size();
-			// Insert the index into the map created before, this will be helpful to find
-			// the next halfedge of a boundary halfedge
-			index_from_halfedges.insert(std::pair<long, long>(vB, vA), new_halfedge_index);
-			tails.push_back(vB); // tip of halfedge i is the tail of the twin halfedge
-			tips.push_back(vA); // tail of the halfedge i is the tip of the twin halfedge
-			// Border halfedge doesn't have adjacent triangle counter-clockwise, so put a placeholder value
-			adjacent_faces.push_back(-1); 
+	size_t num_faces = 0;
+	// Get the number of groups in the collection of entities.
+	// Not needed for this example use-case, but just showing some more apis.
+	SUEntitiesGetNumFaces(entities, &num_faces);
+	rb_warn("Number of faces %d", (int)num_faces);
 
-			// According to this documentation: https://www.graphics.rwth-aachen.de/media/openmesh_static/Documentations/OpenMesh-6.2-Documentation/a00032.html#nav_bound
-			// a halfedge is only a boundary if it is not adjacent to a face
-			// this means that current halfedge is not really on the boundary, but its twin is
-			// so mark current halfedge as not boundary and mark new halfedge as boundary
-			is_boundary_halfedge[i] = false;
-			is_boundary_halfedge.push_back(true); // put twin halfedge, which is on boundary
-			
-			// twins[new halfedge] = i
-			// twins[i] = new halfedge index
-			twins[i] = new_halfedge_index;
-			twins.push_back(index); 			 
-			
-			// Delay computation of the next halfedges because these halfedges may not exist yet
-			// So a placeholder value -1 means that the next halfedge wasn't computed yet
-			nexts.push_back(-1); 
-		}
+	if (num_faces == 0) {
+		rb_warn("No faces found at the top level of the model %d");
+		return Qnil;
 	}
 
-	// Now thah all the boundary halfedges were created,
-	// compute their nexts halfedges
-	for (int i = num_interior_halfedges; i < tips.size(); ++i)
-	{
-		if (is_boundary_halfedge[i])
-		{
-			// the next of a boundary halfedge is equal to
-			// the twin of next of the next of its twin...
-			// that is, next[i] = twin[next[next[twin[i]];
-			// Easier to draw than to write:
-			/*
-			
-			      A
-			    /   \ 
-			  /       \  
-			B --------> C
-			next of BC should be CA, which is the same as computing:
-			twin of BC = CB
-			next of the twin of BC = BA
-			next of the next of the twin of BC = AC
-			twin of the next of the next of the twin of BC = CA
-			which is the answer...
-			*/
-			nexts[i] = twins[nexts[nexts[twins[i]]]];
-		}
-	}
-}
+	std::vector<SUFaceRef> faces(num_faces);
+	size_t count = 0;
 
-CHalfEdge::~CHalfEdge()
-{
-	//TODO: implement this method
-	// do we need to implement this? doesnt std::vector free its own memory automatically in c++ 20?
-}
-
-// return the twin half edge of the current half edge
-long CHalfEdge::twin(long i_he)
-{
-	// TODO: check this method
-	long value = twins[i_he];
-	return value;
-}
-
-// return the tail_vertex of the current half edge
-long CHalfEdge::tail_vertex(long i_he)
-{
-	long vertex=0;
-	//TODO: implement this method
-	vertex = tails[i_he];
-	return vertex;
-}
-
-// return the head_vertex of the current half edge
-long CHalfEdge::tip_vertex(long i_he)
-{
-	long vertex=0;
-	//TODO: implement this method
-	vertex = tips[i_he];
-	return vertex;
-}
-
-// return whether the current edge is a boundary half edge
-bool CHalfEdge::is_boundary_half_edge(long i_he)
-{
-	bool is_boundary = false;
-	//TODO: implement this method
-	is_boundary = is_boundary_halfedge[i_he];
-	return is_boundary;
-}
-
-void CHalfEdge::update_tip(long i_he, long i_tip)
-{
-	// TODO: check this method
-	tips[i_he] = i_tip;
-}
-
-void CHalfEdge::update_twin(long i_he, long i_twin)
-{
-	//TODO: implement this method
-	twins[i_he] = i_twin;
-}
-
-long CHalfEdge::next(long i_he)
-{
-	long value=0;
-	//TODO: implement this method
-	value = nexts[i_he];
-	return value;
-}
-
-vector<long> CHalfEdge::vertex_one_ring_half_edges_from_half_edge(long i_he, bool around_tail)
-{
-	vector<long> vertices;
-	//TODO: implement this method
-	return vertices;
-}
-
-bool CHalfEdge::is_boundary_vertex_from_half_edge(long i_he)
-{
-	bool is_boundary_vertex = false;
-	//TODO: implement this method
-	// According to https://github.com/odedstein/sgi-introduction-course/blob/main/007_boundary/007_boundary.md
-	// "A vertex is a boundary vertex if it is contained in a boundary edge. Otherwise, it is an interior vertex."
-	// Does the same applies to the halfedge? If so, I think it is...
-	is_boundary_vertex = is_boundary_half_edge(i_he);
-	return is_boundary_vertex;
-}
-
-void CHalfEdge::face_from_half_edge_data(std::vector<long> &faces_indices)
-{
-	//TODO: implement this method
-	// update face_indices vector that passed in as reference according to the halfedge data structure
-
-	// Get the number of halfedges; any of the vectors that implicitly represent the halfedges could be used
-	int num_halfedges = tips.size();
-	for (int i = 0; i < num_halfedges; ++i)
-	{
-		int current_face = adjacent_faces[i];
-		if (current_face == -1)
-		{
-			// Skip boundary halfedges, no adjacent face
-			continue;
-		}
+	// From the collection of entities, let's get the faces...
+	SUEntitiesGetFaces(entities, num_faces, &faces[0], &count);
+	std::vector<long> faces_indices;
+	std::vector<vertex> vertices;
+	for (auto face : faces) {
 		
-		if (3 * (current_face + 1) > faces_indices.size())
+		std::vector<SUVertexRef> temp_vertices(3);
+		size_t count_verts = 0;
+		size_t count_verts_used = 0;
+		SUFaceGetNumVertices(face, &count_verts);
+		SUFaceGetVertices(face, count_verts, &temp_vertices[0], &count_verts_used);
+		// need to use SUMeshHelperCreate to get the mesh vertices of the face
+		for (int i = 0; i < 3; i++)
 		{
-			faces_indices.resize(3 * (current_face + 1));
+			SUPoint3D position;
+			SUVertexGetPosition(temp_vertices[i], &position);
+			vertex temp = { position.x, position.y, position.z };
+			std::vector<vertex>::iterator it = std::find(vertices.begin(), vertices.end(), temp);
+			if (it == vertices.end())
+			{
+				vertices.push_back(temp);
+				faces_indices.push_back(static_cast<long>(vertices.size()-1));
+			}
+			else
+			{
+				faces_indices.push_back(static_cast<long>(it-vertices.begin()));
+			}
 		}
-
-		int v0 = tips[i];
-		int v1 = tips[nexts[i]];
-		int v2 = tips[nexts[nexts[i]]];
-		faces_indices[3 * current_face] = v0;
-		faces_indices[3 * current_face + 1] = v1;
-		faces_indices[3 * current_face + 2] = v2;
 	}
+
+	// Decimation QEM Function
+	// TODO : Test the implemenation of the decimation function
+	long num_target_vertices = static_cast < long>(0.5 * vertices.size());
+	decimate_qem(faces_indices, vertices, num_target_vertices,
+	             500, 1.0, 1.e-6);
+
+	// Create an array of faces. Each entry will be an array of vertices
+	// TODO : Test the implemenation of the adding the vertices to the faces
+	long num_faces_indices = static_cast<long>(faces_indices.size());
+	long num_decimated_faces = static_cast<long>(faces_indices.size() / 3);
+	VALUE ruby_new_faces = rb_ary_new_capa(num_decimated_faces);
+	for (long i = 0; i < num_decimated_faces; i++) {
+
+		VALUE ruby_vertices = rb_ary_new_capa(3);
+		
+		for (int j = 0; j < 3; j++)
+		{
+			SUPoint3D position(vertices[faces_indices[i * 3 + j]].x,
+				               vertices[faces_indices[i * 3 + j]].y, 
+				               vertices[faces_indices[i * 3 + j]].z);
+			SUVertexRef temp_vertices(&position);
+			SUEntityRef entity = SUVertexToEntity(temp_vertices);
+			VALUE ruby_vertex = Qnil;
+			SUEntityToRuby(entity, &ruby_vertex);
+			rb_ary_push(ruby_vertices, ruby_vertex);
+		}
+		rb_ary_push(ruby_new_faces, ruby_vertices);
+	}
+
+
+
+	// Geoff's original code to get the first 3 vertices of each face.
+	//for (auto face : faces) {
+	//	std::vector<SUVertexRef> vertices(3);
+	//	size_t count_verts = 0;
+	//	size_t count_verts_used = 0;
+	//	SUFaceGetNumVertices(face, &count_verts);
+	//	// ... and get the first 3 vertices to send back to ruby so it can make a
+	//	// new face.
+	//	SUFaceGetVertices(face, 3, &vertices[0], &count_verts_used);
+	//	rb_warn("Number of verts in face %d (truncated to %d)", (int)count_verts, count_verts_used);
+	//	VALUE ruby_vertices = rb_ary_new_capa(static_cast<long>(vertices.size()));
+
+	//	// Iterate through the vertices, adding them to the ruby_vertices container, which in turn
+	//	// is put into the ruby_new_faces container to be sent back to Ruby.
+	//	for (auto v : vertices) {
+	//		SUEntityRef entity = SUVertexToEntity(v);
+	//		VALUE ruby_vertex = Qnil;
+	//		SUEntityToRuby(entity, &ruby_vertex);
+	//		rb_ary_push(ruby_vertices, ruby_vertex);
+	//	}
+
+	//	rb_ary_push(ruby_new_faces, ruby_vertices);
+	//}
+
+
+	// Send out the array of arrays of vertices after doing geometry processing.
+	return ruby_new_faces;
 }
 
-bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt)
+VALUE ruby_platform() {
+	return GetRubyInterface(RUBY_PLATFORM);
+}
+
+// Load this module from Ruby using:
+//   require 'SUEX_MeshSimplification'
+extern "C"
+void Init_SUEX_MeshSimplification()
 {
-	bool is_valid = true;
-	//TODO:	implement this function
-	return is_valid;
+	VALUE mSUEX_MeshSimplification = rb_define_module("SUEX_MeshSimplification");
+	rb_define_const(mSUEX_MeshSimplification, "CEXT_VERSION", GetRubyInterface("1.0.0"));
+	rb_define_module_function(mSUEX_MeshSimplification, "hello_world", VALUEFUNC(hello_world), 0);
+	rb_define_module_function(mSUEX_MeshSimplification, "ruby_platform", VALUEFUNC(ruby_platform), 0);
+	rb_define_module_function(mSUEX_MeshSimplification, "take_input", VALUEFUNC(take_input), 1);
 }
