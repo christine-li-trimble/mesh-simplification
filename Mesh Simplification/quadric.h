@@ -73,7 +73,7 @@ public:
 
 
 	std::vector<CQuadricData> vertex_quadric(CHalfEdge half_edge, float boundary_quadric_weight, double boundary_quadric_regularization);
-	void optimal_location_and_cost(CQuadricData Qeij_, vertex& v_opt, float& cost);
+	void optimal_location_and_cost(CQuadricData Qeij_, vertex& v_opt, double& cost);
 
 
 private:

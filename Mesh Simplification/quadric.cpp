@@ -1,5 +1,4 @@
 #include "quadric.h"
-#include <Eigen/Dense> //Johan's implementation
 #include <iostream> //Tina's implementation
 #include <cmath> //Tina's implementation
 
@@ -164,14 +163,14 @@ std::vector<CQuadricData> CQuadric::vertex_quadric(CHalfEdge half_edge, float bo
 }
 
 // For Tina's implementation
-double determinant(const double A[3][3]) {
+double CQuadric::determinant(const double A[3][3]) {
     return A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
         - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
         + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
 }
 
 // For Tina's implementation
-bool inverse(const double A[3][3], double invA[3][3]) {
+bool CQuadric::inverse(const double A[3][3], double invA[3][3]) {
     double det = determinant(A);
     if (fabs(det) < 1e-9) {
         // Matrix is singular
@@ -197,7 +196,7 @@ bool inverse(const double A[3][3], double invA[3][3]) {
 
 // Function to solve the linear system A * v_opt = b
 // For Tina's implementation
-bool solve_linear_system(const double A[3][3], const vertex& b, vertex& v_opt) {
+bool CQuadric::solve_linear_system(const double A[3][3], const vertex& b, vertex& v_opt) {
     double invA[3][3];
     if (!inverse(A, invA)) {
         // A is singular
@@ -212,49 +211,49 @@ bool solve_linear_system(const double A[3][3], const vertex& b, vertex& v_opt) {
     return true;
 }
 
-void CQuadric::optimal_location_and_cost(CQuadricData Qeij_, vertex& v_opt, float& cost)
+void CQuadric::optimal_location_and_cost(CQuadricData Qeij_, vertex& v_opt, double& cost)
 {
     //calculate v_opt and cost
 
-    // Johan's implementation
-    // Decompose the quadric matrix Qeij_ into A, b, and c components
-    double A[3][3];
-    double b[3];
-    double c = Qeij_.getMatrix()[3][3];
+    //// Johan's implementation
+    //// Decompose the quadric matrix Qeij_ into A, b, and c components
+    //double A[3][3];
+    //double b[3];
+    //double c = Qeij_.getMatrix()[3][3];
 
-    // Extract A (3x3 top-left submatrix of Qeij_)
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            A[i][j] = Qeij_.getMatrix()[i][j];
-        }
-    }
+    //// Extract A (3x3 top-left submatrix of Qeij_)
+    //for (int i = 0; i < 3; i++) {
+    //    for (int j = 0; j < 3; j++) {
+    //        A[i][j] = Qeij_.getMatrix()[i][j];
+    //    }
+    //}
 
-    // Extract b (negation of the first three elements of the fourth column of Qeij_)
-    for (int i = 0; i < 3; i++) {
-        b[i] = -Qeij_.getMatrix()[i][3];
-    }
+    //// Extract b (negation of the first three elements of the fourth column of Qeij_)
+    //for (int i = 0; i < 3; i++) {
+    //    b[i] = -Qeij_.getMatrix()[i][3];
+    //}
 
 
-    Eigen::Matrix3d eigenA;
-    Eigen::Vector3d eigenB;
-    // Copying data from A and b into Eigen types for further calculations
-    for (int i = 0; i < 3; ++i) {
-        eigenB(i) = b[i];
-        for (int j = 0; j < 3; ++j) {
-            eigenA(i, j) = A[i][j];
-        }
-    }
+    //Eigen::Matrix3d eigenA;
+    //Eigen::Vector3d eigenB;
+    //// Copying data from A and b into Eigen types for further calculations
+    //for (int i = 0; i < 3; ++i) {
+    //    eigenB(i) = b[i];
+    //    for (int j = 0; j < 3; ++j) {
+    //        eigenA(i, j) = A[i][j];
+    //    }
+    //}
 
-    // Solve for the optimal vertex position using Eigen's QR decomposition
-    Eigen::Vector3d v_opt_eigen = eigenA.colPivHouseholderQr().solve(eigenB);
+    //// Solve for the optimal vertex position using Eigen's QR decomposition
+    //Eigen::Vector3d v_opt_eigen = eigenA.colPivHouseholderQr().solve(eigenB);
 
-    // Calculate the quadric error at the optimal vertex location
-    cost = (v_opt_eigen.transpose() * eigenA * v_opt_eigen)(0, 0) - 2 * eigenB.transpose() * v_opt_eigen + c;
+    //// Calculate the quadric error at the optimal vertex location
+    //cost = (v_opt_eigen.transpose() * eigenA * v_opt_eigen)(0, 0) - 2 * eigenB.transpose() * v_opt_eigen + c;
 
-    // Update the vertex structure with the optimal location
-    v_opt.x = v_opt_eigen(0);
-    v_opt.y = v_opt_eigen(1);
-    v_opt.z = v_opt_eigen(2);
+    //// Update the vertex structure with the optimal location
+    //v_opt.x = v_opt_eigen(0);
+    //v_opt.y = v_opt_eigen(1);
+    //v_opt.z = v_opt_eigen(2);
 
     // Tina's implementation
     // Extract A (3x3), b (3x1), and c from the 4x4 quadric matrix Qeij_

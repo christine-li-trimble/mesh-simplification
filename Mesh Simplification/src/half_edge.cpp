@@ -2,6 +2,8 @@
 #include <vector>
 #include "half_edge.h"
 #include <map>
+#include <iostream>
+#include <unordered_set>
 
 using namespace std;
 
@@ -9,7 +11,7 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 {
 	
 	// initialize the half edge data structure
-	std::map<std::pair<long, long>, int> index_from_halfedges;
+	std::map<std::pair<long, long>, size_t> index_from_halfedges;
 
 	// For each triangle face, iterate over three edges and create three halfedges
 	for (int face = 0; face < faces_indices.size() / 3; ++face)
@@ -20,11 +22,11 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 		int v2 = faces_indices[3 * face + 2];
 
 		// New Halfedges: v0v1, v1v2, v2v0
-		int prev_halfedges_len = tips.size();
+		size_t prev_halfedges_len = tips.size();
 		// mapping vertices to halfedges indices. The number of tips counts how many
 		// halfedges were already created
 		// creating halfedge index for the vertices pair v0v1
-		index_from_halfedges.insert(std::pair<long, long>(v0, v1), tips.size());
+		index_from_halfedges.insert({ std::pair<long,long>(v0, v1), tips.size() });
 		tails.push_back(v0);
 		tips.push_back(v1);
 		// creating the next of each halfedge. The indices are the number 
@@ -32,28 +34,28 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 		// since the triangle has 3 vertices)
 		// getting the next of the first halfedge of the current triangle face. 1%3 is equal to 1,
 		// so, 1 is summed, since this is the first halfedge of the triangle
-		nexts.push_back(prev_halfedges_len + (1 % 3));
+		nexts.push_back(static_cast<long>(prev_halfedges_len) + (1 % 3));
 		// getting the face that the current halfedge 'points' to
 		adjacent_faces.push_back(face);
 
 		// creating halfedge index for the vertices pair v1v2
-		index_from_halfedges.insert(std::pair<long, long>(v1, v2), tips.size());
+		index_from_halfedges.insert({ std::pair<long, long>(v1, v2), tips.size() });
 		tails.push_back(v1);
 		tips.push_back(v2);
 		// getting the next of the second halfedge of the current triangle face. 2%3 is equal to 2,
 		// so, 2 is summed, since this is the second halfedge of the triangle	
-		nexts.push_back(prev_halfedges_len + (2 % 3));
+		nexts.push_back(static_cast<long>(prev_halfedges_len) + (2 % 3));
 		// getting the face that the current halfedge 'points' to
 		adjacent_faces.push_back(face);
 
 		// creating halfedge index for the vertices pair v2v0. Note that we are returning
 		// to the first vertex of the triangle face:
-		index_from_halfedges.insert(std::pair<long, long>(v2, v0), tips.size());
+		index_from_halfedges.insert({ std::pair<long, long>(v2, v0), tips.size() });
 		tails.push_back(v2);
 		tips.push_back(v0);
 		// getting the next of the first halfedge of the current triangle face. 3%3 is equal to 0,
 		// so, 0 is summed, since this is the starting halfedge of the triangle
-		nexts.push_back(prev_halfedges_len + (3 % 3));
+		nexts.push_back(static_cast<long>(prev_halfedges_len) + (3 % 3));
 		// getting the face that the current halfedge 'points' to
 		adjacent_faces.push_back(face);
 	}
@@ -74,8 +76,8 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 			// the halfedge is not on the boundary,
 			// and a twin was found
 			// twins[vAvB = index and twins[index = vAvB
-			twins[it->second] = index;
-			twins[index] = it->second;
+			twins[it->second] = static_cast<long>(index);
+			twins[index] = static_cast<long>(it->second);
 		}
 		else
 		{
@@ -88,8 +90,8 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 	// which doesn't include the twins of border halfedges
 	// The next loop creates the twins of border halfedges and place their attributes at the end of
 	// the vectors that define the halfedges (tips, tails, nexts etc)
-	int num_interior_halfedges = tips.size();
-	for (int i = 0; i < num_interior_halfedges; ++i)
+	long num_interior_halfedges = static_cast<long>(tips.size());
+	for (long i = 0; i < num_interior_halfedges; ++i)
 	{
 		if (is_boundary_halfedge[i])
 		{
@@ -101,10 +103,10 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 			int vB = tips[i];
 
 			// The current number of halfedges can be used as an index for the new halfedge
-			int new_halfedge_index = twins.size();
+			size_t new_halfedge_index = twins.size();
 			// Insert the index into the map created before, this will be helpful to find
 			// the next halfedge of a boundary halfedge
-			index_from_halfedges.insert(std::pair<long, long>(vB, vA), new_halfedge_index);
+			index_from_halfedges.insert({ std::pair<long, long>(vB, vA), new_halfedge_index });
 			tails.push_back(vB); // tip of halfedge i is the tail of the twin halfedge
 			tips.push_back(vA); // tail of the halfedge i is the tip of the twin halfedge
 			// Border halfedge doesn't have adjacent triangle counter-clockwise, so put a placeholder value
@@ -119,8 +121,8 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 			
 			// twins[new halfedge] = i
 			// twins[i] = new halfedge index
-			twins[i] = new_halfedge_index;
-			twins.push_back(index); 			 
+			twins[i] = static_cast<long>(new_halfedge_index);
+			twins.push_back(i); 			 
 			
 			// Delay computation of the next halfedges because these halfedges may not exist yet
 			// So a placeholder value -1 means that the next halfedge wasn't computed yet
@@ -303,8 +305,8 @@ void CHalfEdge::face_from_half_edge_data(std::vector<long> &faces_indices)
 	// update face_indices vector that passed in as reference according to the halfedge data structure
 
 	// Get the number of halfedges; any of the vectors that implicitly represent the halfedges could be used
-	int num_halfedges = tips.size();
-	for (int i = 0; i < num_halfedges; ++i)
+	size_t num_halfedges = tips.size();
+	for (size_t i = 0; i < num_halfedges; ++i)
 	{
 		int current_face = adjacent_faces[i];
 		if (current_face == -1)
@@ -334,7 +336,7 @@ void CHalfEdge::face_from_half_edge_data(std::vector<long> &faces_indices)
 
 vector<long> CHalfEdge::vertex_one_ring_vertices_from_half_edge( long i_he) {
 
-	one_ring_he = vertex_one_ring_half_edges_from_half_edge(i_he, around_tail = True)
+	vector<long> one_ring_he = vertex_one_ring_half_edges_from_half_edge(i_he, true);
 	vector<long> one_ring_v;
 
 	for (long half_edge : one_ring_he) {
@@ -357,7 +359,7 @@ vector<long> CHalfEdge::vertex_one_ring_vertices_from_half_edge( long i_he) {
 }
 
 
-bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt)
+bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt, bool verbose)
 {
 	bool is_valid = true;
 	// Condition 1:
@@ -378,10 +380,10 @@ bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, ver
 	// the intersection of the one-rings neighbourhoods of both v1 and v2 contains exactly two vertices in the case of
 	// a non - boundary edge and exactly one vertex in the case of a boundary edge
 
-	one_ring_v_i = vertex_one_ring_vertices_from_half_edge(i_he);
-	one_ring_v_j = vertex_one_ring_vertices_from_half_edge(next(i_he));
+	vector<long> one_ring_v_i = vertex_one_ring_vertices_from_half_edge(i_he);
+	vector<long> one_ring_v_j = vertex_one_ring_vertices_from_half_edge(next(i_he));
 
-	unordered_set<long> intersected_v;
+	std::unordered_set<long> intersected_v;
 	// getting the intersection of vertices between the one-ring neighbourhood of
 	// both vi and vj vertex (vi and vj form an edge)
 	for (long v : one_ring_v_i) {
