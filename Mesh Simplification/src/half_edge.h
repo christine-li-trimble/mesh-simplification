@@ -22,6 +22,9 @@ public:
 	bool is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt);
 	bool is_boundary_vertex_from_half_edge(long i_he);
 	void face_from_half_edge_data(std::vector<long>& faces_indices);
+
+	// Method to determine the number of half-edges
+	size_t size();
 private:
 	vector<long> twins;
 	vector<long> tips;

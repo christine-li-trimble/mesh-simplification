@@ -39,8 +39,45 @@ struct edge_to_collapse
 
 void remove_unreferenced(vector<long> &faces_indices, vector<vertex> &vertices)
 {
-	//TODO:	implement this function
 	// remove unferenced indices from vertices list
+	// Step 1: Mark all vertices that are referenced by a face
+	vector<bool> is_referenced(vertices.size(), false);
+
+	// Iterate through faces_indices and mark referenced vertices
+	for (long idx : faces_indices)
+	{
+		if (idx >= 0 && idx < vertices.size())  // Ensure the index is valid
+		{
+			is_referenced[idx] = true;
+		}
+	}
+
+	// Step 2: Create a mapping from old vertex indices to new vertex indices
+	vector<long> old_to_new(vertices.size(), -1);
+	vector<vertex> new_vertices;
+
+	long new_index = 0;
+
+	for (long i = 0; i < vertices.size(); ++i)
+	{
+		if (is_referenced[i])
+		{
+			old_to_new[i] = new_index++;  // Map old index to new index
+			new_vertices.push_back(vertices[i]);  // Add the referenced vertex to new_vertices
+		}
+	}
+
+	// Replace old vertices with the new compacted vertices
+	vertices = std::move(new_vertices);
+
+	// Step 3: Update faces_indices to use the new vertex indices
+	for (long& idx : faces_indices)
+	{
+		if (idx >= 0 && idx < old_to_new.size())  // Ensure the index is valid
+		{
+			idx = old_to_new[idx];
+		}
+	}
 }
 
 /// <summary>
