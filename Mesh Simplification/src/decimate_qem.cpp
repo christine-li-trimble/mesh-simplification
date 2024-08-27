@@ -24,11 +24,11 @@ static constexpr long GHOST_HALF_EDGE = numeric_limits<long>::max() - 5;
 static constexpr long INVALID_HALF_EDGE = numeric_limits<long>::max() - 1;
 static constexpr long INVALID_VERTEX_INDEX = numeric_limits<long>::max() - 2;
 static constexpr long INVALID_EDGE = numeric_limits<long>::max() - 4;
-static constexpr vertex GHOST_VERTEX_LOCATION = { 0,0,0 };
+static const vertex GHOST_VERTEX_LOCATION = { 0.0,0.0,0.0 };
 
 struct edge_to_collapse
 {
-	float cost;
+	double cost;
 	long cur_collapse;
 	long i_he;
 	long i_vertex;
@@ -39,8 +39,45 @@ struct edge_to_collapse
 
 void remove_unreferenced(vector<long> &faces_indices, vector<vertex> &vertices)
 {
-	//TODO:	implement this function
 	// remove unferenced indices from vertices list
+	// Step 1: Mark all vertices that are referenced by a face
+	vector<bool> is_referenced(vertices.size(), false);
+
+	// Iterate through faces_indices and mark referenced vertices
+	for (long idx : faces_indices)
+	{
+		if (idx >= 0 && idx < vertices.size())  // Ensure the index is valid
+		{
+			is_referenced[idx] = true;
+		}
+	}
+
+	// Step 2: Create a mapping from old vertex indices to new vertex indices
+	vector<long> old_to_new(vertices.size(), -1);
+	vector<vertex> new_vertices;
+
+	long new_index = 0;
+
+	for (long i = 0; i < vertices.size(); ++i)
+	{
+		if (is_referenced[i])
+		{
+			old_to_new[i] = new_index++;  // Map old index to new index
+			new_vertices.push_back(vertices[i]);  // Add the referenced vertex to new_vertices
+		}
+	}
+
+	// Replace old vertices with the new compacted vertices
+	vertices = std::move(new_vertices);
+
+	// Step 3: Update faces_indices to use the new vertex indices
+	for (long& idx : faces_indices)
+	{
+		if (idx >= 0 && idx < old_to_new.size())  // Ensure the index is valid
+		{
+			idx = old_to_new[idx];
+		}
+	}
 }
 
 /// <summary>
@@ -53,7 +90,8 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 	long num_targe_vertices, 
 	int print_every_iterations, 
 	float boundary_quadric_weight,
-	double boundary_quadric_regularization)
+	double boundary_quadric_regularization, 
+	bool verbose)
 {
 
 
@@ -110,7 +148,7 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 			CQuadricData Qj = Qv[j_vertex];
 			CQuadricData Qeij = Qi + Qj;
 
-			float cost;
+			double cost;
 			vertex v_opt;
 
 			// find optimal location and cost
@@ -151,7 +189,7 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 		pop_heap(edges_heap.begin(), edges_heap.end(), [](const struct edge_to_collapse &a, const struct edge_to_collapse &b) {return a.cost > b.cost; });
 		// CHECK if this edge info is valid
 		// collapse the edge
-		float min_cost = edges_heap.back().cost;
+		double min_cost = edges_heap.back().cost;
 		long i_he = edges_heap.back().i_he;
 		long time_stamp = edges_heap.back().cur_collapse;
 		long i_vertex = edges_heap.back().i_vertex;
@@ -173,7 +211,7 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 		}
 
 		// check if collapse is valid
-		if (!half_edge.is_collapse_valid(vertices, i_he, v_opt))
+		if (!half_edge.is_collapse_valid(vertices, i_he, v_opt, verbose))
 		{
 		    edge_time_stamps[min_cost_edge] = cur_collapse;
 
@@ -278,7 +316,7 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 			CQuadricData Qj_ = Qv[j_vertex_];
 			CQuadricData Qeij_ = Qi_ + Qj_;
 
-			float cost_;
+			double cost_;
 			vertex v_opt_;
 
 			// find optimal location and cost
@@ -299,7 +337,7 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 			CQuadricData Qj_ = Qv[j_vertex_];
 			CQuadricData Qeij_ = Qi_ + Qj_;
 
-			float cost_;
+			double cost_;
 			vertex v_opt_;
 
 			// find optimal location and cost
