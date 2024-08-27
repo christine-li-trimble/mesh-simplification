@@ -70,7 +70,7 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 		// -> if this halfedge doesn't exist, then the current halfedge is a boundary edge
 		int vA = halfedge.first;
 		int vB = halfedge.second;
-		auto it = index_from_halfedges.find(std::pair<long, long>(vA, vB));
+		auto it = index_from_halfedges.find(std::pair<long, long>(vB, vA));
 		if (it != index_from_halfedges.end())
 		{
 			// the halfedge is not on the boundary,
