@@ -36,7 +36,13 @@
     <ClInclude Include="src\half_edge.h">
       <Filter>Ruby Extension</Filter>
     </ClInclude>
-    <ClInclude Include="quadric.h">
+    <ClInclude Include="src\global_constant.h">
+      <Filter>Ruby Extension</Filter>
+    </ClInclude>
+    <ClInclude Include="src\quadric.h">
+      <Filter>Ruby Extension</Filter>
+    </ClInclude>
+    <ClInclude Include="src\vertex.h">
       <Filter>Ruby Extension</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,7 +59,7 @@
     <ClCompile Include="src\half_edge.cpp">
       <Filter>Ruby Extension</Filter>
     </ClCompile>
-    <ClCompile Include="quadric.cpp">
+    <ClCompile Include="src\quadric.cpp">
       <Filter>Ruby Extension</Filter>
     </ClCompile>
   </ItemGroup>

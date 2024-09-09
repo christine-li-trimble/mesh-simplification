@@ -51,4 +51,14 @@ struct vertex
 		}
 		return vertex(0, 0, 0);  // Return a zero vector if magnitude is zero
 	}
+
+	// length the vector
+	double length() const {
+		double length = std::sqrt(x * x + y * y + z * z);
+		if (length > 0)
+			return length;
+		else
+			return 0.0;
+	}
+
 };

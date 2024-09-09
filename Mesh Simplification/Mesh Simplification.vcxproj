@@ -672,19 +672,20 @@
     <None Include="RubyExtension.def" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="quadric.cpp" />
     <ClCompile Include="src\decimate_qem.cpp" />
     <ClCompile Include="src\half_edge.cpp" />
+    <ClCompile Include="src\quadric.cpp" />
     <ClCompile Include="src\SUEX_MeshSimplification.cpp" />
     <ClCompile Include="src\RubyUtils\RubyUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="quadric.h" />
     <ClInclude Include="src\decimate_qem.h" />
+    <ClInclude Include="src\global_constant.h" />
     <ClInclude Include="src\half_edge.h" />
+    <ClInclude Include="src\quadric.h" />
     <ClInclude Include="src\RubyUtils\RubyLib.h" />
     <ClInclude Include="src\RubyUtils\RubyUtils.h" />
-    <ClInclude Include="vertex.h" />
+    <ClInclude Include="src\vertex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

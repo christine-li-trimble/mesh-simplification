@@ -3,7 +3,7 @@
 
 using namespace std;
 
-void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
+void decimate_qem(vector<long> & faces_indices, vector<vertex>& vertices,
 	long num_targe_vertices,
 	int print_every_iterations = 500,
 	float boundary_quadric_weight = 1.0,

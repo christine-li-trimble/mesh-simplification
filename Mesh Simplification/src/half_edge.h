@@ -21,7 +21,7 @@ public:
 	vector<long>vertex_one_ring_half_edges_from_half_edge(long i_he, bool around_tail = true);
 	vector<long> vertex_one_ring_vertices_from_half_edge(long i_he);
 	bool is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt, bool verbose);
-	bool is_boundary_vertex_from_half_edge(long i_he);
+	bool is_boundary_vertex_from_half_edge(const long & i_he);
 	void face_from_half_edge_data(std::vector<long>& faces_indices);
 
 	// Method to determine the number of half-edges
@@ -32,7 +32,7 @@ private:
 
 	// New attributes
 	vector<long> tails;
-	vector<long> nexts;
+	//vector<long> nexts;
 	vector<long> adjacent_faces;
 	vector<bool> is_boundary_halfedge;
 };

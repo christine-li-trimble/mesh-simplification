@@ -1,15 +1,16 @@
 #include <algorithm>
 #include <vector>
 #include "half_edge.h"
+#include "global_constant.h"
 #include <map>
 #include <iostream>
 #include <unordered_set>
 
 using namespace std;
 
-CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &vertices)
+CHalfEdge::CHalfEdge(const vector<long>& faces_indices, const vector<vertex>& vertices)
 {
-	
+
 	// initialize the half edge data structure
 	std::map<std::pair<long, long>, size_t> index_from_halfedges;
 
@@ -34,7 +35,7 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 		// since the triangle has 3 vertices)
 		// getting the next of the first halfedge of the current triangle face. 1%3 is equal to 1,
 		// so, 1 is summed, since this is the first halfedge of the triangle
-		nexts.push_back(static_cast<long>(prev_halfedges_len) + (1 % 3));
+		// nexts.push_back(static_cast<long>(prev_halfedges_len) + (1 % 3));
 		// getting the face that the current halfedge 'points' to
 		adjacent_faces.push_back(face);
 
@@ -44,7 +45,7 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 		tips.push_back(v2);
 		// getting the next of the second halfedge of the current triangle face. 2%3 is equal to 2,
 		// so, 2 is summed, since this is the second halfedge of the triangle	
-		nexts.push_back(static_cast<long>(prev_halfedges_len) + (2 % 3));
+		// nexts.push_back(static_cast<long>(prev_halfedges_len) + (2 % 3));
 		// getting the face that the current halfedge 'points' to
 		adjacent_faces.push_back(face);
 
@@ -55,14 +56,14 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 		tips.push_back(v0);
 		// getting the next of the first halfedge of the current triangle face. 3%3 is equal to 0,
 		// so, 0 is summed, since this is the starting halfedge of the triangle
-		nexts.push_back(static_cast<long>(prev_halfedges_len) + (3 % 3));
+		// nexts.push_back(static_cast<long>(prev_halfedges_len) + (3 % 3));
 		// getting the face that the current halfedge 'points' to
 		adjacent_faces.push_back(face);
 	}
-	
-	twins.resize(tips.size(), -1);
+
+	twins.resize(tips.size(), GHOST_HALF_EDGE);
 	is_boundary_halfedge.resize(tips.size(), false);
-	for (const auto& [halfedge, index]: index_from_halfedges)
+	for (const auto& [halfedge, index] : index_from_halfedges)
 	{
 		// Current halfedge with tail vA and tip vB and index X...
 		// Search for halfedge with tail vB and tip vA and index Y
@@ -86,76 +87,77 @@ CHalfEdge::CHalfEdge(const vector<long> & faces_indices, const vector<vertex> &v
 		}
 	}
 
-	// Get the current number of halfedges -- this represents all halfedges created so far,
-	// which doesn't include the twins of border halfedges
-	// The next loop creates the twins of border halfedges and place their attributes at the end of
-	// the vectors that define the halfedges (tips, tails, nexts etc)
-	long num_interior_halfedges = static_cast<long>(tips.size());
-	for (long i = 0; i < num_interior_halfedges; ++i)
-	{
-		if (is_boundary_halfedge[i])
-		{
-			// Current (border) halfedge has tail vA and tip vB
-			// Create twin halfedge which has tail vB and tip vA
-			// A new halfedge was just created, so it is necesary to put a new entry in the the vectors
-			// that implicitly represent the halfedges
-			int vA = tails[i];
-			int vB = tips[i];
 
-			// The current number of halfedges can be used as an index for the new halfedge
-			size_t new_halfedge_index = twins.size();
-			// Insert the index into the map created before, this will be helpful to find
-			// the next halfedge of a boundary halfedge
-			index_from_halfedges.insert({ std::pair<long, long>(vB, vA), new_halfedge_index });
-			tails.push_back(vB); // tip of halfedge i is the tail of the twin halfedge
-			tips.push_back(vA); // tail of the halfedge i is the tip of the twin halfedge
-			// Border halfedge doesn't have adjacent triangle counter-clockwise, so put a placeholder value
-			adjacent_faces.push_back(-1); 
+	//// Get the current number of halfedges -- this represents all halfedges created so far,
+	//// which doesn't include the twins of border halfedges
+	//// The next loop creates the twins of border halfedges and place their attributes at the end of
+	//// the vectors that define the halfedges (tips, tails, nexts etc)
+	//long num_interior_halfedges = static_cast<long>(tips.size());
+	//for (long i = 0; i < num_interior_halfedges; ++i)
+	//{
+	//	if (is_boundary_halfedge[i])
+	//	{
+	//		// Current (border) halfedge has tail vA and tip vB
+	//		// Create twin halfedge which has tail vB and tip vA
+	//		// A new halfedge was just created, so it is necesary to put a new entry in the the vectors
+	//		// that implicitly represent the halfedges
+	//		int vA = tails[i];
+	//		int vB = tips[i];
 
-			// According to this documentation: https://www.graphics.rwth-aachen.de/media/openmesh_static/Documentations/OpenMesh-6.2-Documentation/a00032.html#nav_bound
-			// a halfedge is only a boundary if it is not adjacent to a face
-			// this means that current halfedge is not really on the boundary, but its twin is, 
-			// so mark current halfedge as not boundary and mark new halfedge as boundary
-			is_boundary_halfedge[i] = false;
-			is_boundary_halfedge.push_back(true); // put twin halfedge, which is on boundary
-			
-			// twins[new halfedge] = i
-			// twins[i] = new halfedge index
-			twins[i] = static_cast<long>(new_halfedge_index);
-			twins.push_back(i); 			 
-			
-			// Delay computation of the next halfedges because these halfedges may not exist yet
-			// So a placeholder value -1 means that the next halfedge wasn't computed yet
-			nexts.push_back(-1); 
-		}
-	}
+	//		// The current number of halfedges can be used as an index for the new halfedge
+	//		size_t new_halfedge_index = twins.size();
+	//		// Insert the index into the map created before, this will be helpful to find
+	//		// the next halfedge of a boundary halfedge
+	//		index_from_halfedges.insert({ std::pair<long, long>(vB, vA), new_halfedge_index });
+	//		tails.push_back(vB); // tip of halfedge i is the tail of the twin halfedge
+	//		tips.push_back(vA); // tail of the halfedge i is the tip of the twin halfedge
+	//		// Border halfedge doesn't have adjacent triangle counter-clockwise, so put a placeholder value
+	//		adjacent_faces.push_back(-1); 
 
-	// Now that all the boundary halfedges were created,
-	// compute their nexts halfedges
-	for (int i = num_interior_halfedges; i < tips.size(); ++i)
-	{
-		if (is_boundary_halfedge[i])
-		{
-			// the next of a boundary halfedge is equal to
-			// the twin of next of the next of its twin...
-			// that is, next[i] = twin[next[next[twin[i]];
-			// Easier to draw than to write:
-			/*
-			
-			      A
-			    /   \ 
-			  /       \  
-			B --------> C
-			next of BC should be CA, which is the same as computing:
-			1- twin of BC == CB
-			2- next of the twin of BC == next of CB == BA 
-			3- next of the next of the twin of BC == next of BA == AC
-			twin of the next of the next of the twin of BC = CA
-			which is the answer...
-			*/
-			nexts[i] = twins[nexts[nexts[twins[i]]]];
-		}
-	}
+	//		// According to this documentation: https://www.graphics.rwth-aachen.de/media/openmesh_static/Documentations/OpenMesh-6.2-Documentation/a00032.html#nav_bound
+	//		// a halfedge is only a boundary if it is not adjacent to a face
+	//		// this means that current halfedge is not really on the boundary, but its twin is, 
+	//		// so mark current halfedge as not boundary and mark new halfedge as boundary
+	//		is_boundary_halfedge[i] = false;
+	//		is_boundary_halfedge.push_back(true); // put twin halfedge, which is on boundary
+	//		
+	//		// twins[new halfedge] = i
+	//		// twins[i] = new halfedge index
+	//		twins[i] = static_cast<long>(new_halfedge_index);
+	//		twins.push_back(i); 			 
+	//		
+	//		// Delay computation of the next halfedges because these halfedges may not exist yet
+	//		// So a placeholder value -1 means that the next halfedge wasn't computed yet
+	//		nexts.push_back(-1); 
+	//	}
+	//}
+
+	//// Now that all the boundary halfedges were created,
+	//// compute their nexts halfedges
+	//for (int i = num_interior_halfedges; i < tips.size(); ++i)
+	//{
+	//	if (is_boundary_halfedge[i])
+	//	{
+	//		// the next of a boundary halfedge is equal to
+	//		// the twin of next of the next of its twin...
+	//		// that is, next[i] = twin[next[next[twin[i]];
+	//		// Easier to draw than to write:
+	//		/*
+	//		
+	//		      A
+	//		    /   \ 
+	//		  /       \  
+	//		B --------> C
+	//		next of BC should be CA, which is the same as computing:
+	//		1- twin of BC == CB
+	//		2- next of the twin of BC == next of CB == BA 
+	//		3- next of the next of the twin of BC == next of BA == AC
+	//		twin of the next of the next of the twin of BC = CA
+	//		which is the answer...
+	//		*/
+	//		nexts[i] = twins[nexts[nexts[twins[i]]]];
+	//	}
+	//}
 }
 
 CHalfEdge::~CHalfEdge()
@@ -180,7 +182,7 @@ long CHalfEdge::twin(long i_he)
 // return the tail_vertex of the current half edge
 long CHalfEdge::tail_vertex(long i_he)
 {
-	long vertex=0;
+	long vertex = 0;
 	//TODO: implement this method
 	vertex = tails[i_he];
 	return vertex;
@@ -189,7 +191,7 @@ long CHalfEdge::tail_vertex(long i_he)
 // return the head_vertex (tip) of the current half edge
 long CHalfEdge::tip_vertex(long i_he)
 {
-	long vertex=0;
+	long vertex = 0;
 	//TODO: implement this method
 	vertex = tips[i_he];
 	return vertex;
@@ -198,74 +200,72 @@ long CHalfEdge::tip_vertex(long i_he)
 // return whether the current edge is a boundary half edge
 bool CHalfEdge::is_boundary_half_edge(long i_he)
 {
-	bool is_boundary = false;
-	//TODO: implement this method
-	is_boundary = is_boundary_halfedge[i_he];
-	return is_boundary;
+	return twin(i_he) == GHOST_HALF_EDGE;
 }
 
 void CHalfEdge::update_tip(long i_he, long i_tip)
 {
-	// TODO: check this method
-	tips[i_he] = i_tip;
+	if (i_he != GHOST_HALF_EDGE)
+		tips[i_he] = i_tip;
 }
 
 void CHalfEdge::update_twin(long i_he, long i_twin)
 {
-	//TODO: implement this method
-	twins[i_he] = i_twin;
+	if (i_he != GHOST_HALF_EDGE && i_he != INVALID_HALF_EDGE)
+		twins[i_he] = i_twin;
+	if (i_twin != GHOST_HALF_EDGE && i_twin != INVALID_HALF_EDGE)
+		twins[i_twin] = i_he;
 }
 
 long CHalfEdge::next(long i_he)
 {
-	long value=0;
+	long value = 0;
 	//TODO: implement this method
-	value = nexts[i_he];
-	return value;
+	long s = i_he % 3;
+	return (i_he - s) + ((s + 1) % 3);
 }
 
 vector<long> CHalfEdge::vertex_one_ring_half_edges_from_half_edge(long i_he, bool around_tail)
 {
 	vector<long> vertices_one_ring;
-	
+
 	long he_start = i_he;
+	vertices_one_ring.push_back(he_start);
 
 
 	if (around_tail) {
 		// rotating around the tail of the half edge
-		vertices_one_ring.push_back(he_start);
 		while (true) {
 			// getting the counter-clockwise half-edge around the tail vertex
-			he_start = twin(next(next(he_start)));
-			if (he_start == i_he) {
-				// getting back to the starting vertex
+			i_he = twin(next(next(i_he)));
+			if (i_he == he_start) {
+				// this is an interior vertex, getting back to the starting vertex
 				break;
 			}
-			if (he_start == -1) {
+			if (i_he == GHOST_HALF_EDGE) {
 				// hitted a boundary, start clockwise traversal
-				he_start = i_he;
+				i_he = he_start;
 				while (true) {
-					if (twin(he_start) == -1) {
+					if (twin(i_he) == GHOST_HALF_EDGE) {
 						break;
 					}
-					he_start = next(twin(he_start));
-					vertices_one_ring.insert(vertices_one_ring.begin(), he_start);
+					i_he = next(twin(i_he));
+					vertices_one_ring.insert(vertices_one_ring.begin(), i_he);
 				}
 				break;
 			}
-			vertices_one_ring.push_back(he_start);
+			vertices_one_ring.push_back(i_he);
 		}
 	}
 	else {
 		// rotating around the tip of the half edge
-		vertices_one_ring.push_back(i_he);
 		while (true) {
-			if (twin(i_he) == -1) {
-				// hitted a boundary, start clockwise traversal
-				i_he = next(i_he);
+			// hitted a boundary, start clockwise traversal
+			if (twin(i_he) == GHOST_HALF_EDGE) {
+				i_he = he_start;
 				while (true) {
 					i_he = twin(next(i_he));
-					if (i_he == -1) {
+					if (i_he == GHOST_HALF_EDGE) {
 						// boundary is reached
 						return vertices_one_ring;
 					}
@@ -287,54 +287,63 @@ vector<long> CHalfEdge::vertex_one_ring_half_edges_from_half_edge(long i_he, boo
 }
 
 
-bool CHalfEdge::is_boundary_vertex_from_half_edge(long i_he)
+bool CHalfEdge::is_boundary_vertex_from_half_edge(const long& i_he)
 {
-	bool is_boundary_vertex = false;
-	//TODO: implement this method
-	// According to https://github.com/odedstein/sgi-introduction-course/blob/main/007_boundary/007_boundary.md
-	// "A vertex is a boundary vertex if it is contained in a boundary edge. Otherwise, it is an interior vertex."
-	// Does the same applies to the halfedge? If so, I think it is...
-	is_boundary_vertex = is_boundary_half_edge(i_he);
-	return is_boundary_vertex;
+	//bool is_boundary_vertex = false;
+	////TODO: implement this method
+	//// According to https://github.com/odedstein/sgi-introduction-course/blob/main/007_boundary/007_boundary.md
+	//// "A vertex is a boundary vertex if it is contained in a boundary edge. Otherwise, it is an interior vertex."
+	//// Does the same applies to the halfedge? If so, I think it is...
+	//is_boundary_vertex = is_boundary_half_edge(i_he);
+	//return is_boundary_vertex;
+
+	//Check whether the tail vertex v of a half edge is on the boundary
+	long i_he_start = i_he;
+	long i_he_test = i_he;
+	while (true)
+	{
+		i_he_test = twin(next(next(i_he_test)));
+		if (i_he_test == i_he_start)
+		{
+			return false;
+		}
+		if (i_he_test == GHOST_HALF_EDGE)
+		{
+			return true;
+		}
+	}
 }
 
-void CHalfEdge::face_from_half_edge_data(std::vector<long> &faces_indices)
-	// for each halfedge, retrieves the vertices of the face that the current halfedge belongs to
+void CHalfEdge::face_from_half_edge_data(std::vector<long>& faces_indices)
+// for each halfedge, retrieves the vertices of the face that the current halfedge belongs to
 {
 	//TODO: implement this method
 	// update face_indices vector that passed in as reference according to the halfedge data structure
 
 	// Get the number of halfedges; any of the vectors that implicitly represent the halfedges could be used
+	size_t count = 0;
 	size_t num_halfedges = tips.size();
-	for (size_t i = 0; i < num_halfedges; ++i)
+	for (size_t i = 0; i < num_halfedges; i += 3)
 	{
-		int current_face = adjacent_faces[i];
-		if (current_face == -1)
-		{
-			// Skip boundary halfedges, no adjacent face
-			continue;
-		}
-		
-		if (3 * (current_face + 1) > faces_indices.size())
-		{
-			faces_indices.resize(3 * (current_face + 1));
-		}
+		if (tips[i] == INVALID_VERTEX_INDEX) continue;
 		// getting the vertices of each face by "walking" on the face through v0, v1 and finally ending up in v2
-		int v0 = tips[i];
-		int v1 = tips[nexts[i]];
-		int v2 = tips[nexts[nexts[i]]];
+		int v1 = tips[static_cast<long>(i)];
+		int v2 = tips[next(static_cast<long>(i))];
+		int v0 = tips[next(next(static_cast<long>(i)))];
 
 		// faces_indices is a vector that stores vertices related to the faces.
 		// The first 3 positions determine the first face; the next 3 positions determine another face; and so on
 		// a face is composed by vertices Vn, Vn+1 and Vn+2
 		// the current_face variable is only an offset to traverse the vector in every 3 to 3 positions
-		faces_indices[3 * current_face] = v0;
-		faces_indices[3 * current_face + 1] = v1;
-		faces_indices[3 * current_face + 2] = v2;
+		faces_indices[count] = v0;
+		faces_indices[count + 1] = v1;
+		faces_indices[count + 2] = v2;
+		count += 3;
 	}
+	faces_indices.resize(count);
 }
 
-vector<long> CHalfEdge::vertex_one_ring_vertices_from_half_edge( long i_he) {
+vector<long> CHalfEdge::vertex_one_ring_vertices_from_half_edge(long i_he) {
 
 	vector<long> one_ring_he = vertex_one_ring_half_edges_from_half_edge(i_he, true);
 	vector<long> one_ring_v;
@@ -345,7 +354,7 @@ vector<long> CHalfEdge::vertex_one_ring_vertices_from_half_edge( long i_he) {
 		one_ring_v.push_back(tip_v);
 
 		// checking if the vertex is on the boundary 
-		if (twin(next(next(half_edge))) == -1) {
+		if (twin(next(next(half_edge))) == GHOST_HALF_EDGE) {
 			tip_v = tip_vertex(next(half_edge));
 			one_ring_v.push_back(tip_v);
 		}
@@ -358,7 +367,7 @@ vector<long> CHalfEdge::vertex_one_ring_vertices_from_half_edge( long i_he) {
 	return one_ring_v;
 }
 
-
+// This is used to detemine whether a half edge can be collapsed by checking all the conditions
 bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt, bool verbose)
 {
 	bool is_valid = true;
@@ -369,9 +378,9 @@ bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, ver
 	bool is_he_boundary_half_edge = is_boundary_half_edge(i_he);
 
 	if (is_i_boundary_vertex && is_j_boundary_vertex && !is_he_boundary_half_edge) {
-		
+
 		cout << "Decimation violates the boundary topological constraint, skip it" << endl;
-		
+
 		return false;
 	}
 
@@ -406,6 +415,15 @@ bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, ver
 		}
 		return false;
 	}
-	// TODO: implement conditions 3 and 4
+
+	// TODO: 3. empty constraint (see Sec 3.2 of https://www.merlin.uzh.ch/contributionDocument/download/14550#:~:text=A%20vertex%20split%20involves%20removing,operator%20adds%20detail%20to%20it.)
+
+
+
+	// 4. Flipover and triangle quality checks(see Sec 3.7 of https ://www.cs.cmu.edu/~garland/thesis/thesis-onscreen.pdf)
+
+
+
+	// if it passes all the checkes, then the collapse is valid
 	return is_valid;
 }

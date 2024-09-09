@@ -68,7 +68,7 @@ std::vector<CQuadricData> CQuadric::vertex_quadric(CHalfEdge half_edge, float bo
         vertex v02 = v2 - v0;
         vertex normal = v01.cross(v02);
         FA[f] = 0.5f * std::sqrt(normal.dot(normal));  // Triangle area
-        normal.normalize();
+        normal = normal.normalize();
 
         // Compute the plane equation for the face
         double d = -normal.dot(v0);
@@ -84,13 +84,13 @@ std::vector<CQuadricData> CQuadric::vertex_quadric(CHalfEdge half_edge, float bo
         }
     }
 
-    // Compute and normalize face areas
-    // Normalize face areas
-    double mean_FA = std::accumulate(FA.begin(), FA.end(), 0.0) / FA.size();
-    for (long f = 0; f < nF; ++f)
-    {
-        FA[f] /= mean_FA;  // Normalize so the mean is 1
-    }
+    //// Compute and normalize face areas
+    //// Normalize face areas
+    //double mean_FA = std::accumulate(FA.begin(), FA.end(), 0.0) / FA.size();
+    //for (long f = 0; f < nF; ++f)
+    //{
+    //    FA[f] /= mean_FA;  // Normalize so the mean is 1
+    //}
 
     // Scale face quadrics by normalized areas divided by 3
     for (long f = 0; f < nF; ++f)
@@ -132,11 +132,11 @@ std::vector<CQuadricData> CQuadric::vertex_quadric(CHalfEdge half_edge, float bo
 
             // Compute face normal
             vertex fn = (v_tip - v_tail).cross(v_opp - v_tail);
-            fn.normalize();
+            fn = fn.normalize();
 
             // Compute half edge normal
             vertex he_n = (v_tip - v_tail).cross(fn);
-            he_n.normalize();
+            he_n = he_n.normalize();
 
             // Compute half edge plane equation
             double he_d = -he_n.dot(v_tail);
@@ -152,9 +152,12 @@ std::vector<CQuadricData> CQuadric::vertex_quadric(CHalfEdge half_edge, float bo
                 }
             }
 
+            // Edge length
+            double edge_length = (v_tip - v_tail).length();
+
             // Add to vertex quadrics
-            m_Qv[v_tail_idx] = m_Qv[v_tail_idx] + boundary_quadric_weight * he_K;
-            m_Qv[v_tip_idx] = m_Qv[v_tip_idx] + boundary_quadric_weight * he_K;
+            m_Qv[v_tail_idx] = m_Qv[v_tail_idx] + boundary_quadric_weight * edge_length * edge_length * he_K;
+            m_Qv[v_tip_idx] = m_Qv[v_tip_idx] + boundary_quadric_weight * edge_length * edge_length * he_K;
         }
     }
 
@@ -274,7 +277,7 @@ void CQuadric::optimal_location_and_cost(CQuadricData Qeij_, vertex& v_opt, doub
 
         // Compute cost: v_opt^T * A * v_opt + 2 * b^T * v_opt + c
         double c = Qeij_.get(3, 3);
-        cost = (v_opt.dot(A[0]) * v_opt.x + v_opt.dot(A[1]) * v_opt.y + v_opt.dot(A[2]) * v_opt.z) + 2.0 * b.dot(v_opt) + c;
+        cost = (v_opt.dot(A[0]) * v_opt.x + v_opt.dot(A[1]) * v_opt.y + v_opt.dot(A[2]) * v_opt.z) - 2.0 * b.dot(v_opt) + c;
     }
     else {
         // Handle degenerate case (e.g., A is singular)

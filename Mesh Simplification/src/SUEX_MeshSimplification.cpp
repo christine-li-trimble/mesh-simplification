@@ -88,9 +88,9 @@ VALUE take_input() {
 
 	// Decimation QEM Function
 	// TODO : Test the implemenation of the decimation function
-	//long num_target_vertices = static_cast < long>(0.5 * vertices.size());
-	//decimate_qem(faces_indices, vertices, num_target_vertices,
-	//             500, 1.0, 1.e-6, true);
+	long num_target_vertices = static_cast < long>(vertices.size()-1);
+	decimate_qem(faces_indices, vertices, num_target_vertices,
+	             500, 1.0, 1.e-6, true);
 
 	// Create an array of faces. Each entry will be an array of vertices
 	// TODO : Test the implemenation of the adding the vertices to the faces

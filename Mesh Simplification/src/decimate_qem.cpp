@@ -10,21 +10,10 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include <limits>
+#include "global_constant.h"
 
 using namespace std;
 
-
-// ========================================
-// global constants QEM
-// ========================================
-
-static constexpr float INF_COST = numeric_limits<float>::max();
-static constexpr long GHOST_HALF_EDGE = numeric_limits<long>::max() - 5;
-static constexpr long INVALID_HALF_EDGE = numeric_limits<long>::max() - 1;
-static constexpr long INVALID_VERTEX_INDEX = numeric_limits<long>::max() - 2;
-static constexpr long INVALID_EDGE = numeric_limits<long>::max() - 4;
-static const vertex GHOST_VERTEX_LOCATION = { 0.0,0.0,0.0 };
 
 struct edge_to_collapse
 {
@@ -37,7 +26,7 @@ struct edge_to_collapse
 };
 
 
-void remove_unreferenced(vector<long> &faces_indices, vector<vertex> &vertices)
+void remove_unreferenced(vector<long>& faces_indices, vector<vertex>& vertices)
 {
 	// remove unferenced indices from vertices list
 	// Step 1: Mark all vertices that are referenced by a face
@@ -86,17 +75,17 @@ void remove_unreferenced(vector<long> &faces_indices, vector<vertex> &vertices)
 /// <param name="faces_indices">face vetex indices, size of total face * 3</param>
 /// <param name="vertices">vertices </param>
 /// <param name="num_targe_vertices"> target vertex number for decimation</param>
-void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
-	long num_targe_vertices, 
-	int print_every_iterations, 
+void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
+	long num_targe_vertices,
+	int print_every_iterations,
 	float boundary_quadric_weight,
-	double boundary_quadric_regularization, 
+	double boundary_quadric_regularization,
 	bool verbose)
 {
 
 
 	// basic geometry quantities
-	long nHe = static_cast<long>( faces_indices.size()) ;
+	long nHe = static_cast<long>(faces_indices.size());
 	long nV = static_cast<long>(vertices.size());
 
 
@@ -107,6 +96,7 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 	//tips
 	// twins, tips = build_implicit_half_edges(F, return_v2he=False)
 	CHalfEdge half_edge(faces_indices, vertices);
+	nHe = static_cast<long>(half_edge.size());
 
 	// ========================================
 	// calculate vertex Quadric 
@@ -122,8 +112,13 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 	long cur_collapse = 0;
 
 	// compute initial edge quadrics
-	unique_ptr<bool[]> he_processed = make_unique<bool[]>(nHe);
-	unique_ptr<long[]> he2e = make_unique<long[]>(nHe);
+	//unique_ptr<bool[]> he_processed = make_unique<bool[]>(nHe);
+	vector<bool> he_processed;
+	//unique_ptr<long[]> he2e = make_unique<long[]>(nHe);
+	vector<long> he2e;
+	he_processed.resize(nHe);
+	he2e.resize(nHe);
+
 	for (long i = 0; i < nHe; i++)
 	{
 		he_processed[i] = false;
@@ -169,7 +164,7 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 	}
 
 	// build a minheap for the collapsed edges
-	make_heap (edges_heap.begin(), edges_heap.end(), [](const struct edge_to_collapse &a, const struct edge_to_collapse &b) {return a.cost > b.cost; });
+	make_heap(edges_heap.begin(), edges_heap.end(), [](const struct edge_to_collapse& a, const struct edge_to_collapse& b) {return a.cost > b.cost; });
 
 	// ========================================
 	// Start Decimation
@@ -177,7 +172,10 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 
 	// Initialize time stamps
 	long nEdge = edge_Index;
-	unique_ptr<long[]> edge_time_stamps = make_unique<long[]>(nEdge);
+	//unique_ptr<long[]> edge_time_stamps = make_unique<long[]>(nEdge);
+	vector<long> edge_time_stamps;
+	edge_time_stamps.resize(nEdge);
+
 	for (long i = 0; i < nEdge; i++)edge_time_stamps[i] = 0;
 
 	// Start decimation loop
@@ -186,37 +184,45 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 		// get the edge with the min cost
 		// in the tutorial, this was achieve by a min heap
 
-		pop_heap(edges_heap.begin(), edges_heap.end(), [](const struct edge_to_collapse &a, const struct edge_to_collapse &b) {return a.cost > b.cost; });
+		pop_heap(edges_heap.begin(), edges_heap.end(), [](const struct edge_to_collapse& a, const struct edge_to_collapse& b) {return a.cost > b.cost; });
 		// CHECK if this edge info is valid
 		// collapse the edge
+		long time_stamp = edges_heap.back().cur_collapse;
 		double min_cost = edges_heap.back().cost;
 		long i_he = edges_heap.back().i_he;
-		long time_stamp = edges_heap.back().cur_collapse;
 		long i_vertex = edges_heap.back().i_vertex;
 		long j_vertex = edges_heap.back().j_vertex;
 		vertex v_opt = edges_heap.back().v_opt;
+
+		//double min_cost = edges_heap[1].cost;
+		//long time_stamp = edges_heap[1].cur_collapse; 
+		//long i_he = edges_heap[1].i_he;
+		//long i_vertex = edges_heap[1].i_vertex;
+		//long j_vertex = edges_heap[1].j_vertex;
+		//vertex v_opt = edges_heap[1].v_opt;
+
 		edges_heap.pop_back();
 
 		// if edge has been removed
 		long min_cost_edge = he2e[i_he];
-		if(min_cost_edge == INVALID_EDGE)continue;
+		if (min_cost_edge == INVALID_EDGE)continue;
 
 		// if cost is obsolete
 		if (time_stamp != edge_time_stamps[min_cost_edge])continue;
 
 		if (fabs(min_cost - INF_COST) < 1e-6)
 		{
-		    printf("encounter INF cost, cannot be decimate further\n");
+			printf("encounter INF cost, cannot be decimate further\n");
 			break;
 		}
 
 		// check if collapse is valid
 		if (!half_edge.is_collapse_valid(vertices, i_he, v_opt, verbose))
 		{
-		    edge_time_stamps[min_cost_edge] = cur_collapse;
+			edge_time_stamps[min_cost_edge] = cur_collapse;
 
 			edges_heap.push_back({ INF_COST, cur_collapse, i_he, i_vertex, j_vertex, v_opt });
-			push_heap(edges_heap.begin(), edges_heap.end(), [](const struct edge_to_collapse &a, const struct edge_to_collapse &b) {return a.cost > b.cost; });
+			push_heap(edges_heap.begin(), edges_heap.end(), [](const struct edge_to_collapse& a, const struct edge_to_collapse& b) {return a.cost > b.cost; });
 
 			continue;
 		}
@@ -225,18 +231,18 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 
 		// Notation
 		//          k
-        //         /  \         
-        //        /    \     
+		//         /  \         
+		//        /    \     
 		// hennt / henn \
         //      /     hen\hent     
-        //     /    he    \  
-        //    i------------j
-        //     \    het   /   
+		//     /    he    \  
+		//    i------------j
+		//     \    het   /   
 		// hetnt\hetn    /
-        //       \ hetnn/hetnnt       
-        //        \    /         
-        //         \  /       
-        //          l
+		//       \ hetnn/hetnnt       
+		//        \    /         
+		//         \  /       
+		//          l
 		long i_hen = half_edge.next(i_he);
 		long i_henn = half_edge.next(i_hen);
 		long i_hent = half_edge.twin(i_hen); // could be ghost half edge
@@ -271,12 +277,14 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 		}
 
 		// topo update tips (we always keep vertex i)
+		// list of half edge that has tip vertex i
 		vector<long> he_list_tip_i = half_edge.vertex_one_ring_half_edges_from_half_edge(i_henn, false);
+		// list of half edge that has tip vertex j
 		vector<long> he_list_tip_j = half_edge.vertex_one_ring_half_edges_from_half_edge(i_he, false);
 
-		for (const long &he : he_list_tip_j) half_edge.update_tip(he, i_vertex); //we always keep vertex i
-		for (const long &he : he_list_tip_i) half_edge.update_tip(he, i_vertex); //we always keep vertex i
-	
+		for (const long& he : he_list_tip_j) half_edge.update_tip(he, i_vertex); //we always keep vertex i
+		for (const long& he : he_list_tip_i) half_edge.update_tip(he, i_vertex); //we always keep vertex i
+
 		// topo update twins
 		half_edge.update_twin(i_hennt, i_hent);
 		half_edge.update_twin(i_hetnt, i_hetnnt);
@@ -297,10 +305,14 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 		}
 
 		// update the he2e list
-		if (i_hetn != GHOST_HALF_EDGE)	
+		if(i_hent != GHOST_HALF_EDGE)
+			he2e[i_hent] = he2e[i_henn];
+		if (i_hetn != GHOST_HALF_EDGE && i_hetnnt != GHOST_HALF_EDGE)
 			he2e[i_hetnnt] = he2e[i_hetn];
 		for (const long& he : set<long>({ i_he, i_hen, i_henn, i_het, i_hetn, i_hetnn }))
-			he2e[i_hetnn] = INVALID_EDGE;
+		{
+			if(he != GHOST_HALF_EDGE) he2e[he] = INVALID_EDGE;
+		}
 
 		// update costs for edge one-ring half-edges
 		long i_he_new = min(i_hennt, i_hetnnt);
@@ -329,7 +341,7 @@ void decimate_qem(vector<long> faces_indices, vector<vertex> vertices,
 		}
 
 		// if i is a bounary vertex, then we need to update one more edge
-		if(half_edge.is_boundary_vertex_from_half_edge(he_list_new.back()))
+		if (half_edge.is_boundary_vertex_from_half_edge(he_list_new.back()))
 		{
 			long he = half_edge.next(half_edge.next(he_list_new.back()));
 			long j_vertex_ = half_edge.tail_vertex(he);
