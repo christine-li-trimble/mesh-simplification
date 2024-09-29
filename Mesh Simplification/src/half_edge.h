@@ -20,9 +20,12 @@ public:
 	long next(long i_he);
 	vector<long>vertex_one_ring_half_edges_from_half_edge(long i_he, bool around_tail = true);
 	vector<long> vertex_one_ring_vertices_from_half_edge(long i_he);
-	bool is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt, bool verbose);
 	bool is_boundary_vertex_from_half_edge(const long & i_he);
 	void face_from_half_edge_data(std::vector<long>& faces_indices);
+	long face(long i_he);
+	bool is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt, 
+		                   double triangle_quality_threshold = 0.1, bool verbose = true);
+	vertex face_normal(const vector<vertex>& vertices, long f);
 
 	// Method to determine the number of half-edges
 	size_t size();
@@ -31,8 +34,5 @@ private:
 	vector<long> tips;
 
 	// New attributes
-	vector<long> tails;
-	//vector<long> nexts;
-	vector<long> adjacent_faces;
 	vector<bool> is_boundary_halfedge;
 };

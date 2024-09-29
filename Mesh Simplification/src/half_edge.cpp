@@ -28,7 +28,6 @@ CHalfEdge::CHalfEdge(const vector<long>& faces_indices, const vector<vertex>& ve
 		// halfedges were already created
 		// creating halfedge index for the vertices pair v0v1
 		index_from_halfedges.insert({ std::pair<long,long>(v0, v1), tips.size() });
-		tails.push_back(v0);
 		tips.push_back(v1);
 		// creating the next of each halfedge. The indices are the number 
 		// of halfedges already created until the moment + a relative index (that ranges from 0 to 3,
@@ -37,28 +36,26 @@ CHalfEdge::CHalfEdge(const vector<long>& faces_indices, const vector<vertex>& ve
 		// so, 1 is summed, since this is the first halfedge of the triangle
 		// nexts.push_back(static_cast<long>(prev_halfedges_len) + (1 % 3));
 		// getting the face that the current halfedge 'points' to
-		adjacent_faces.push_back(face);
+		// adjacent_faces.push_back(face);
 
 		// creating halfedge index for the vertices pair v1v2
 		index_from_halfedges.insert({ std::pair<long, long>(v1, v2), tips.size() });
-		tails.push_back(v1);
 		tips.push_back(v2);
 		// getting the next of the second halfedge of the current triangle face. 2%3 is equal to 2,
 		// so, 2 is summed, since this is the second halfedge of the triangle	
 		// nexts.push_back(static_cast<long>(prev_halfedges_len) + (2 % 3));
 		// getting the face that the current halfedge 'points' to
-		adjacent_faces.push_back(face);
+		// adjacent_faces.push_back(face);
 
 		// creating halfedge index for the vertices pair v2v0. Note that we are returning
 		// to the first vertex of the triangle face:
 		index_from_halfedges.insert({ std::pair<long, long>(v2, v0), tips.size() });
-		tails.push_back(v2);
 		tips.push_back(v0);
 		// getting the next of the first halfedge of the current triangle face. 3%3 is equal to 0,
 		// so, 0 is summed, since this is the starting halfedge of the triangle
 		// nexts.push_back(static_cast<long>(prev_halfedges_len) + (3 % 3));
 		// getting the face that the current halfedge 'points' to
-		adjacent_faces.push_back(face);
+		// adjacent_faces.push_back(face);
 	}
 
 	twins.resize(tips.size(), GHOST_HALF_EDGE);
@@ -171,6 +168,11 @@ size_t CHalfEdge::size()
 	return twins.size();
 }
 
+long CHalfEdge::face(long i_he)
+{
+	return i_he/3;
+}
+
 // return the twin half edge of the current half edge
 long CHalfEdge::twin(long i_he)
 {
@@ -184,7 +186,7 @@ long CHalfEdge::tail_vertex(long i_he)
 {
 	long vertex = 0;
 	//TODO: implement this method
-	vertex = tails[i_he];
+	vertex = tips[next(next(i_he))];
 	return vertex;
 }
 
@@ -367,8 +369,24 @@ vector<long> CHalfEdge::vertex_one_ring_vertices_from_half_edge(long i_he) {
 	return one_ring_v;
 }
 
+vertex CHalfEdge::face_normal(const vector<vertex>& vertices, long f)
+{
+	long he = f * 3;
+	const vertex& v0 = vertices[tip_vertex(he)];
+	const vertex& v1 = vertices[tip_vertex(next(he))];
+	const vertex& v2 = vertices[tip_vertex(next(next(he)))];
+	
+	vertex v01 = v1 - v0;
+	vertex v02 = v2 - v0;
+	vertex normal = v01.cross(v02);
+	normal = normal.normalize();
+
+	return normal;
+}
+
 // This is used to detemine whether a half edge can be collapsed by checking all the conditions
-bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt, bool verbose)
+bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, vertex v_opt, 
+								  double triangle_quality_threshold, bool verbose)
 {
 	bool is_valid = true;
 	// Condition 1:
@@ -419,8 +437,66 @@ bool CHalfEdge::is_collapse_valid(const vector<vertex>& vertices, long i_he, ver
 	// TODO: 3. empty constraint (see Sec 3.2 of https://www.merlin.uzh.ch/contributionDocument/download/14550#:~:text=A%20vertex%20split%20involves%20removing,operator%20adds%20detail%20to%20it.)
 
 
-
 	// 4. Flipover and triangle quality checks(see Sec 3.7 of https ://www.cs.cmu.edu/~garland/thesis/thesis-onscreen.pdf)
+	std::vector<long> f_to_be_removed;
+	f_to_be_removed.push_back(face(i_he));
+	if(twin(i_he) != GHOST_HALF_EDGE)
+		f_to_be_removed.push_back(face(twin(i_he)));
+
+	// check one ring triangles, except the ones that are going to be removed
+	vector<long> he_list_tip_i = vertex_one_ring_half_edges_from_half_edge(next(next(i_he)), false);
+	vector<long> he_list_tip_j = vertex_one_ring_half_edges_from_half_edge(i_he, false);	
+	vector<long> he_list;
+	he_list.insert(he_list.begin(), he_list_tip_i.begin(), he_list_tip_i.end());
+	he_list.insert(he_list.end(), he_list_tip_j.begin(), he_list_tip_j.end());
+	
+	for (const auto & he_ : he_list)
+	{
+		long f_ = face(he_);
+	
+		if (find(f_to_be_removed.begin(), f_to_be_removed.end(), f_) == f_to_be_removed.end()) // if f_ would remain
+		{
+			long he_nn = next(next(he_));
+
+			// do flipover check
+			long v_tail = tail_vertex(he_nn);
+			long v_tip = tip_vertex(he_nn);
+			
+			vertex fn_ = face_normal(vertices, f_);
+			vertex inward_edge_normal_he_nn = fn_.cross(vertices[v_tip] - vertices[v_tail]);
+			double d = -inward_edge_normal_he_nn.dot(vertices[v_tip]);
+
+			if (inward_edge_normal_he_nn.dot(v_opt) + d < 0)
+			{
+				if (verbose)
+				{
+					cout << "Decimation violates flipover condition, skip it" << endl;
+				}
+				return false;
+			}
+
+			// do triangle quality check
+			double l_tail_tip = (vertices[v_tail] - vertices[v_tip]).length();
+			double l_tip_opt = (v_opt - vertices[v_tip]).length();
+			double l_opt_tail = (vertices[v_tail] - v_opt).length();
+			double s = (l_tail_tip + l_tip_opt + l_opt_tail) / 2.;
+			double area = sqrt(s * (s - l_tail_tip) * (s- l_tip_opt) * (s-l_opt_tail) + 1.e-6);
+
+			double quality = 4.* sqrt(3.) * area / 
+							(l_tail_tip * l_tail_tip + l_tip_opt * l_tip_opt + l_opt_tail * l_opt_tail + 1.e-6);
+
+			if (quality < triangle_quality_threshold)
+			{
+				if (verbose)
+				{
+					cout << "Decimation violates triangle quality condition, skip it" << endl;
+				}
+				return false;
+			}	
+		}
+
+	}
+
 
 
 

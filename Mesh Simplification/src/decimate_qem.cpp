@@ -10,6 +10,7 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include <fstream>
 #include "global_constant.h"
 
 using namespace std;
@@ -25,6 +26,25 @@ struct edge_to_collapse
 	vertex v_opt;
 };
 
+/// <summary>
+/// Remove unreferenced vertices from the vertices list
+/// </summary>
+void write_obj(const char *filename, const vector <long>& faces_indices, const vector<vertex>& vertices)
+{
+	std::ofstream obj_file(filename, std::ofstream::out);
+
+	for (const auto &vertex : vertices)
+	{
+		obj_file << "v " << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
+	}
+
+	for (int i = 0; i < faces_indices.size(); i += 3)
+	{
+		obj_file << "f " << faces_indices[i] + 1 << " " << faces_indices[i + 1] + 1 << " " << faces_indices[i + 2] + 1 << std::endl;
+	}
+
+	obj_file.close();
+}
 
 void remove_unreferenced(vector<long>& faces_indices, vector<vertex>& vertices)
 {
@@ -77,13 +97,18 @@ void remove_unreferenced(vector<long>& faces_indices, vector<vertex>& vertices)
 /// <param name="num_targe_vertices"> target vertex number for decimation</param>
 void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
 	long num_targe_vertices,
+	double triangle_quality_threshold,
 	int print_every_iterations,
 	float boundary_quadric_weight,
 	double boundary_quadric_regularization,
 	bool verbose)
 {
 
-
+	// write OBJ file
+	//write_obj("C:\\src\\SGI-Course\\sgi-introduction-course-main\\sgi-introduction-course-main\\301_simplification\\data\\R_100.obj", 
+	//	      faces_indices, vertices);
+	
+	 
 	// basic geometry quantities
 	long nHe = static_cast<long>(faces_indices.size());
 	long nV = static_cast<long>(vertices.size());
@@ -217,7 +242,7 @@ void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
 		}
 
 		// check if collapse is valid
-		if (!half_edge.is_collapse_valid(vertices, i_he, v_opt, verbose))
+		if (!half_edge.is_collapse_valid(vertices, i_he, v_opt, triangle_quality_threshold, verbose))
 		{
 			edge_time_stamps[min_cost_edge] = cur_collapse;
 
