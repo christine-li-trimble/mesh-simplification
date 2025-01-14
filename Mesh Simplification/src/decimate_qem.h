@@ -3,6 +3,8 @@
 
 using namespace std;
 
+void read_obj(const char* filename, vector <long>& faces_indices, vector<vertex>& vertices);
+
 void decimate_qem(vector<long> & faces_indices, vector<vertex>& vertices,
 	long num_targe_vertices,
 	double triangle_quality_threshold = 0.1,

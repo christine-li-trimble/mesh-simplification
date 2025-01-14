@@ -11,6 +11,7 @@
 #include <vector>
 #include <set>
 #include <fstream>
+#include <string>
 #include "global_constant.h"
 
 using namespace std;
@@ -26,14 +27,34 @@ struct edge_to_collapse
 	vertex v_opt;
 };
 
+void write_heap(const char* filename, const vector<struct edge_to_collapse>& edges_heap, const vector<vertex>& vertices)
+{
+	std::ofstream heap_file(filename, std::ofstream::out);
+
+	heap_file << "Heap size: " << edges_heap.size() << std::endl;
+
+	for (const auto& edge : edges_heap)
+	{
+		struct vertex i_loc = vertices[edge.i_vertex];
+		struct vertex j_loc = vertices[edge.j_vertex];
+		heap_file << "cost: " << edge.cost << ", cur_collapse: " << edge.cur_collapse << ", i_he: " << edge.i_he
+			<< ", i_vertex: " << edge.i_vertex << ", i_loc_x: " << i_loc.x << ", i_loc_y: " << i_loc.y << ", i_loc_z: " << i_loc.z
+			<< ", j_vertex: " << edge.j_vertex << ", j_loc_x: " << j_loc.y << ", j_loc_y: " << j_loc.y << ", j_loc_z: " << j_loc.z << std::endl;
+	}
+
+	heap_file.close();
+
+}
+
+
 /// <summary>
 /// Remove unreferenced vertices from the vertices list
 /// </summary>
-void write_obj(const char *filename, const vector <long>& faces_indices, const vector<vertex>& vertices)
+void write_obj(const char* filename, const vector <long>& faces_indices, const vector<vertex>& vertices)
 {
 	std::ofstream obj_file(filename, std::ofstream::out);
 
-	for (const auto &vertex : vertices)
+	for (const auto& vertex : vertices)
 	{
 		obj_file << "v " << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
 	}
@@ -45,6 +66,43 @@ void write_obj(const char *filename, const vector <long>& faces_indices, const v
 
 	obj_file.close();
 }
+
+/// <summary>
+/// Remove unreferenced vertices from the vertices list
+/// </summary>
+void read_obj(const char* filename, vector <long>& faces_indices, vector<vertex>& vertices)
+{
+	std::ifstream obj_file(filename, std::ofstream::in);
+
+	string line;
+
+	while (getline(obj_file, line))
+	{
+		if (line[0] == 'v')
+		{
+			double x, y, z;
+			vertex v;
+			if (sscanf_s(line.c_str(), "v %lf %lf %lf", &x, &y, &z))
+			{
+				v.x = x; v.y = y; v.z = z;
+				vertices.push_back(v);
+			}
+		}
+		else if (line[0] == 'f')
+		{
+			long i, j, k;
+			if (sscanf_s(line.c_str(), "f %ld %ld %ld", &i, &j, &k))
+			{
+				faces_indices.push_back(i - 1);
+				faces_indices.push_back(j - 1);
+				faces_indices.push_back(k - 1);
+			}
+		}
+	}
+
+	obj_file.close();
+}
+
 
 void remove_unreferenced(vector<long>& faces_indices, vector<vertex>& vertices)
 {
@@ -95,7 +153,7 @@ void remove_unreferenced(vector<long>& faces_indices, vector<vertex>& vertices)
 /// <param name="faces_indices">face vetex indices, size of total face * 3</param>
 /// <param name="vertices">vertices </param>
 /// <param name="num_targe_vertices"> target vertex number for decimation</param>
-void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
+void decimate_qem(vector<long>& faces_indices, vector<vertex>& vertices,
 	long num_targe_vertices,
 	double triangle_quality_threshold,
 	int print_every_iterations,
@@ -105,10 +163,10 @@ void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
 {
 
 	// write OBJ file
-	//write_obj("C:\\src\\SGI-Course\\sgi-introduction-course-main\\sgi-introduction-course-main\\301_simplification\\data\\R_100.obj", 
+	//write_obj("C:\\src\\SGI-Course\\sgi-introduction-course-main\\sgi-introduction-course-main\\301_simplification\\data\\susane_original.obj", 
 	//	      faces_indices, vertices);
-	
-	 
+
+
 	// basic geometry quantities
 	long nHe = static_cast<long>(faces_indices.size());
 	long nV = static_cast<long>(vertices.size());
@@ -135,6 +193,10 @@ void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
 	// decimation parameter
 	long total_collapse = nV - num_targe_vertices;
 	long cur_collapse = 0;
+
+	for(long i = 0; i<vertices.size(); i++)
+		GHOST_VERTEX_LOCATION = GHOST_VERTEX_LOCATION + vertices[i];
+	GHOST_VERTEX_LOCATION = GHOST_VERTEX_LOCATION * (1.0 / vertices.size());
 
 	// compute initial edge quadrics
 	//unique_ptr<bool[]> he_processed = make_unique<bool[]>(nHe);
@@ -208,6 +270,7 @@ void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
 	{
 		// get the edge with the min cost
 		// in the tutorial, this was achieve by a min heap
+		if (cur_collapse == 100) write_heap("C:\\dump\\heap_file.txt", edges_heap, vertices);
 
 		pop_heap(edges_heap.begin(), edges_heap.end(), [](const struct edge_to_collapse& a, const struct edge_to_collapse& b) {return a.cost > b.cost; });
 		// CHECK if this edge info is valid
@@ -219,18 +282,14 @@ void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
 		long j_vertex = edges_heap.back().j_vertex;
 		vertex v_opt = edges_heap.back().v_opt;
 
-		//double min_cost = edges_heap[1].cost;
-		//long time_stamp = edges_heap[1].cur_collapse; 
-		//long i_he = edges_heap[1].i_he;
-		//long i_vertex = edges_heap[1].i_vertex;
-		//long j_vertex = edges_heap[1].j_vertex;
-		//vertex v_opt = edges_heap[1].v_opt;
-
 		edges_heap.pop_back();
 
 		// if edge has been removed
 		long min_cost_edge = he2e[i_he];
 		if (min_cost_edge == INVALID_EDGE)continue;
+
+		// if the i or j vertex is ghost vertex
+		if (vertices[i_vertex] == GHOST_VERTEX_LOCATION || vertices[j_vertex] == GHOST_VERTEX_LOCATION)continue;
 
 		// if cost is obsolete
 		if (time_stamp != edge_time_stamps[min_cost_edge])continue;
@@ -330,13 +389,13 @@ void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
 		}
 
 		// update the he2e list
-		if(i_hent != GHOST_HALF_EDGE)
+		if (i_hent != GHOST_HALF_EDGE)
 			he2e[i_hent] = he2e[i_henn];
 		if (i_hetn != GHOST_HALF_EDGE && i_hetnnt != GHOST_HALF_EDGE)
 			he2e[i_hetnnt] = he2e[i_hetn];
 		for (const long& he : set<long>({ i_he, i_hen, i_henn, i_het, i_hetn, i_hetnn }))
 		{
-			if(he != GHOST_HALF_EDGE) he2e[he] = INVALID_EDGE;
+			if (he != GHOST_HALF_EDGE) he2e[he] = INVALID_EDGE;
 		}
 
 		// update costs for edge one-ring half-edges
@@ -393,6 +452,11 @@ void decimate_qem(vector<long> &faces_indices, vector<vertex> &vertices,
 	half_edge.face_from_half_edge_data(faces_indices);
 	// remove unferenced vertices
 	remove_unreferenced(faces_indices, vertices);
+
+
+	//// write OBJ file
+	//write_obj("C:\\src\\SGI-Course\\sgi-introduction-course-main\\sgi-introduction-course-main\\301_simplification\\data\\Susane_404.obj",
+	//	faces_indices, vertices);
 
 }
 
